@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bianka Trivia Night</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div id="app">
+        <!-- Welcome Screen -->
+        <div id="welcome-screen" class="screen active" style="overflow: hidden;">
+            <div id="otter-container">
+                <div class="otter o1">🦦📚</div>
+                <div class="otter o2">📖</div>
+                <div class="otter o3">🦦👓</div>
+                <div class="otter o4">✏️</div>
+                <div class="otter o5">🦦💻</div>
+                <div class="otter o6">📝</div>
+                <div class="otter o7">🦦🧮</div>
+            </div>
+            <div style="display: flex; align-items: center; justify-content: center; gap: 15px; z-index: 2; position: relative;">
+                <h1 class="title" style="margin: 0;">BIANKA<br>TRIVIA NIGHT</h1>
+            </div>
+            <button id="start-btn" class="primary-btn" style="margin-top: 60px; z-index: 2; position: relative;">Start Game</button>
+            <button id="qotd-welcome-btn" class="primary-btn" style="margin-top: 20px; z-index: 2; position: relative; background: linear-gradient(135deg, #0984e3, #00cec9);">
+                Question of the Day
+                <div id="qotd-timer" style="font-size: 0.9rem; font-weight: normal; margin-top: 5px;"></div>
+            </button>
+            <button id="millionaire-welcome-btn" class="primary-btn" style="margin-top: 20px; z-index: 2; position: relative; background: linear-gradient(135deg, #f6d365, #fda085);">
+                Who wants to be a Milllionaire
+            </button>
+            <button id="minesweeper-welcome-btn" class="primary-btn" style="margin-top: 20px; z-index: 2; position: relative; background: linear-gradient(135deg, #a29bfe, #fd79a8);">
+                💣 Minesweeper
+            </button>
+            <button id="sudoku-welcome-btn" class="primary-btn" style="margin-top: 20px; z-index: 2; position: relative; background: linear-gradient(135deg, #00b894, #0984e3);">
+                🔢 Sudoku
+            </button>
+            <div style="position: absolute; bottom: 20px; left: 20px; z-index: 2;">
+                <div style="position: relative; display: inline-block;">
+                    <img src="assets/otter.png" alt="Otter" id="maya-otter" class="floating-otter" style="width: 80px; height: 80px; object-fit: contain; cursor: pointer;">
+                </div>
+            </div>
+            <div style="position: absolute; bottom: 18px; right: 18px; z-index: 2; display: flex; flex-direction: column; align-items: flex-end; gap: 8px;">
+                <div id="days-left-tracker" style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.06); padding: 8px 10px; border-radius: 12px; font-weight: 700; font-size: 0.9rem; display: flex; align-items: center; gap: 8px; backdrop-filter: blur(10px); box-shadow: 0 4px 15px rgba(0,0,0,0.2); transition: all 0.3s ease;">
+                    <span style="font-size:1rem;">📅</span>
+                    <span style="color: var(--secondary);"><span id="days-left-count">0</span> days left</span>
+                </div>
+                <div id="maya-click-counter" style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.06); padding: 8px 10px; border-radius: 12px; font-weight: 700; font-size: 0.9rem; display: flex; align-items: center; gap: 8px; backdrop-filter: blur(10px); box-shadow: 0 4px 15px rgba(0,0,0,0.2); transition: all 0.3s ease;">
+                    <span style="font-size:1rem;">🐾</span>
+                    <span id="maya-click-count">0</span>
+                </div>
+            </div>
+            <button id="settings-btn" style="position: absolute; top: 20px; right: 20px; background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 50%; width: 45px; height: 45px; font-size: 1.5rem; display: flex; align-items: center; justify-content: center; z-index: 2;">⚙️</button>
+            <button id="profile-btn" style="position: absolute; top: 20px; left: 20px; background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 50%; width: 45px; height: 45px; font-size: 1.5rem; display: flex; align-items: center; justify-content: center; z-index: 2;">👤</button>
+        </div>
+
+        <!-- Main Menu Screen -->
+        <div id="menu-screen" class="screen">
+            <button class="back-btn" id="back-to-welcome-from-menu">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </button>
+            <button id="profile-btn-menu" style="position: absolute; top: 20px; right: 20px; background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 50%; width: 45px; height: 45px; font-size: 1.5rem; display: flex; align-items: center; justify-content: center; z-index: 2;">👤</button>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 60px; margin-bottom: 10px;">
+                <h1 class="title" style="margin-top: 0; font-size: 2rem;">CATEGORIES</h1>
+                <div style="background: var(--glass-bg); padding: 10px 15px; border-radius: 20px; font-weight: bold; border: 1px solid var(--primary); font-size: 1.2rem;">⭐ <span id="total-points">0</span></div>
+            </div>
+            <p class="subtitle">Select a Category to Start</p>
+            <div class="category-grid">
+                <button class="category-btn" data-category="eu">
+                    <span class="icon">🇪🇺</span>
+                    <span class="label">European Union</span>
+                </button>
+                <button class="category-btn" data-category="hungary">
+                    <span class="icon">🇭🇺</span>
+                    <span class="label">Hungarian Politics</span>
+                </button>
+                <button class="category-btn" data-category="romania">
+                    <span class="icon">🇷🇴</span>
+                    <span class="label">Romanian Politics</span>
+                </button>
+                <button class="category-btn" data-category="trains">
+                    <span class="icon">🚆</span>
+                    <span class="label">Trains</span>
+                </button>
+                <button class="category-btn" data-category="personal">
+                    <span class="icon">❤️</span>
+                    <span class="label">Radu Questions</span>
+                </button>
+                <button class="category-btn locked" id="mystery-btn" disabled>
+                    <span class="icon">🔒</span>
+                    <span class="label">Mystery (Need 5 ⭐)</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Difficulty Screen -->
+        <div id="difficulty-screen" class="screen">
+            <button class="back-btn" id="back-to-menu">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </button>
+            <h2 class="screen-title" id="selected-category-title">Category</h2>
+            <p class="subtitle">Select Difficulty</p>
+            <div class="difficulty-list">
+                <button class="diff-btn" data-diff="easy">Easy</button>
+                <button class="diff-btn" data-diff="medium">Medium</button>
+                <button class="diff-btn" data-diff="hard">Hard</button>
+                <button class="diff-btn" data-diff="expert" style="font-size: 0.9rem;">ADHD HYPERFIXATION</button>
+            </div>
+        </div>
+
+        <!-- Settings Screen -->
+        <div id="settings-screen" class="screen">
+            <button class="back-btn" id="back-to-welcome">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </button>
+            <h2 class="screen-title" style="margin-top: 60px;">Settings</h2>
+            <div style="margin-top: 30px;">
+                <div class="setting-item" style="flex-direction: column; align-items: flex-start; gap: 10px; background: var(--glass-bg); padding: 20px; border-radius: 15px; border: 1px solid var(--glass-border); margin-bottom: 15px;">
+                    <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
+                        <label>Background Music</label>
+                        <label class="switch">
+                            <input type="checkbox" id="music-toggle" checked>
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                    <div id="music-volume-row" style="display: flex; width: 100%; align-items: center; gap: 10px; overflow: hidden; transition: opacity 0.3s ease, max-height 0.3s ease; max-height: 50px; opacity: 1; margin-top: 15px;">
+                        <span style="font-size: 0.9rem;">🔈</span>
+                        <input type="range" id="music-volume" min="0" max="1" step="0.05" value="0.2" style="flex-grow: 1;">
+                        <span style="font-size: 0.9rem;">🔊</span>
+                    </div>
+                </div>
+                <div class="setting-item" style="flex-direction: column; align-items: flex-start; gap: 10px; background: var(--glass-bg); padding: 20px; border-radius: 15px; border: 1px solid var(--glass-border);">
+                    <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
+                        <label>Sound Effects</label>
+                        <label class="switch">
+                            <input type="checkbox" id="sound-toggle" checked>
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                    <div id="sfx-volume-row" style="display: flex; width: 100%; align-items: center; gap: 10px; overflow: hidden; transition: opacity 0.3s ease, max-height 0.3s ease; max-height: 50px; opacity: 1; margin-top: 15px;">
+                        <span style="font-size: 0.9rem;">🔈</span>
+                        <input type="range" id="sfx-volume" min="0" max="1" step="0.05" value="0.2" style="flex-grow: 1;">
+                        <span style="font-size: 0.9rem;">🔊</span>
+                    </div>
+                </div>
+                <!-- Dev Mode Activation / Dashboard Section -->
+                <div class="setting-item" style="flex-direction: column; align-items: flex-start; gap: 10px; background: var(--glass-bg); padding: 20px; border-radius: 15px; border: 1px solid var(--glass-border); margin-top: 15px; width: 100%;">
+                    <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
+                        <label>Developer Mode</label>
+                        <span id="dev-mode-status" style="font-size: 0.95rem; font-weight: bold; color: var(--accent);">DISABLED</span>
+                    </div>
+                    <div id="dev-password-container" style="display: flex; width: 100%; gap: 10px; margin-top: 10px;">
+                        <input type="password" id="dev-password-input" placeholder="Enter password" style="flex-grow: 1; padding: 10px; border-radius: 10px; border: 1px solid var(--glass-border); background: rgba(0,0,0,0.25); color: white; font-family: inherit; font-size: 0.9rem;">
+                        <button id="dev-unlock-btn" style="padding: 10px 15px; background: var(--primary); border-radius: 10px; font-weight: bold; font-size: 0.9rem;">Unlock</button>
+                    </div>
+                    <div id="dev-dashboard-panel" style="display: none; width: 100%; flex-direction: column; gap: 10px; margin-top: 15px; border-top: 1px solid var(--glass-border); padding-top: 15px;">
+                        <h4 style="color: var(--secondary); margin-bottom: 5px; font-size: 1rem;">Dev LocalStorage Editor</h4>
+                        <div id="dev-ls-items" style="display: flex; flex-direction: column; gap: 8px; max-height: 200px; overflow-y: auto; padding-right: 5px; width: 100%;">
+                            <!-- Dynamically generated local storage items -->
+                        </div>
+                        <div style="display: flex; gap: 10px; margin-top: 10px; width: 100%;">
+                            <button id="dev-add-key-btn" style="flex: 1; padding: 8px; background: rgba(255,255,255,0.06); border: 1px solid var(--glass-border); border-radius: 8px; font-size: 0.85rem; font-weight: bold;">+ Add Item</button>
+                            <button id="dev-reload-ls-btn" style="flex: 1; padding: 8px; background: rgba(255,255,255,0.06); border: 1px solid var(--glass-border); border-radius: 8px; font-size: 0.85rem; font-weight: bold;">🔄 Reload</button>
+                        </div>
+                        <button id="dev-deactivate-btn" style="width: 100%; margin-top: 15px; padding: 10px; border-radius: 10px; background: rgba(231,76,60,0.15); border: 1px solid #e74c3c; color: #ff7675; font-weight: bold; font-size: 0.9rem;">Deactivate Dev Mode</button>
+                    </div>
+                </div>
+                <button id="reset-profile-btn" style="width: 100%; margin-top: 20px; padding: 15px 20px; border: none; border-radius: 15px; background: #e74c3c; color: #fff; font-weight: 700; box-shadow: 0 10px 30px rgba(231, 76, 60, 0.3); cursor: pointer; transition: transform 0.2s ease, opacity 0.2s ease;">Reset Profile</button>
+            </div>
+        </div>
+
+        <!-- Game Screen -->
+        <div id="game-screen" class="screen">
+            <div class="game-header">
+                <button id="exit-game-btn" style="background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 50%; width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; margin-right: 15px; flex-shrink: 0; padding: 0;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M18 6L6 18M6 6l12 12" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+                <div class="progress-bar-container">
+                    <div id="progress-bar"></div>
+                </div>
+                <div class="stats">
+                    <span id="question-count">1/10</span>
+                </div>
+            </div>
+            
+            <div class="question-container">
+                <h3 id="question-text">Question text goes here?</h3>
+            </div>
+            
+            <div class="options-container" id="options-container">
+                <!-- Option buttons generated by JS -->
+            </div>
+
+            <button id="next-btn" class="primary-btn hidden">Continue to Next Question</button>
+        </div>
+
+        <!-- Millionaire Title Screen -->
+        <div id="millionaire-title-screen" class="screen">
+            <div class="millionaire-title-center">
+                <h1 class="title" style="font-size: 3rem;">Who wants to be a Milllionaire</h1>
+                <p class="subtitle" style="margin-top: 20px; color: var(--text-muted);">Preparing the game experience... Please wait.</p>
+                <button id="millionaire-skip-intro-btn" class="primary-btn" style="margin-top: 20px; display: none; width: auto; padding: 12px 24px; font-size: 1rem; z-index: 10; position: relative;">Skip Intro</button>
+            </div>
+        </div>
+
+        <!-- Millionaire Name Screen -->
+        <div id="millionaire-name-screen" class="screen">
+            <button class="back-btn" id="back-to-menu-from-millionaire-name">
+                <img src="assets/milionaire%20logo.png" alt="Millionaire logo" class="millionaire-logo-img" />
+            </button>
+            <div class="millionaire-name-panel">
+                <h2 class="screen-title">Contestant Registration</h2>
+                <p class="subtitle">Enter your name to begin the Millionaire challenge.</p>
+                <input id="millionaire-name-input" class="millionaire-name-input" type="text" placeholder="Contestant name" maxlength="20">
+                <button id="millionaire-name-continue-btn" class="primary-btn" disabled>Continue</button>
+                <p id="millionaire-name-preview" class="subtitle" style="margin-top: 12px; color: var(--secondary);"></p>
+
+            </div>
+        </div>
+
+        <!-- Millionaire Screen -->
+        <div id="millionaire-screen" class="screen">
+            <button class="back-btn" id="back-to-menu-from-millionaire">
+                <img src="assets/milionaire%20logo.png" alt="Millionaire logo" class="millionaire-logo-img" />
+            </button>
+            <div class="millionaire-top-group">
+                <h2 class="millionaire-title">Who wants to be a Milllionaire</h2>
+                <div class="millionaire-status-row">
+                    <div class="millionaire-chip">Question <span id="millionaire-question-count">1</span>/15</div>
+                    <div class="millionaire-chip">Time left: <span id="millionaire-timer">03:00</span></div>
+                </div>
+            </div>
+            <div class="millionaire-content">
+                <div class="millionaire-main-panel">
+                    <div class="question-container" style="min-height: 180px;">
+                        <h3 id="millionaire-question-text">Millionaire question text goes here</h3>
+                    </div>
+                    <div id="millionaire-options" class="millionaire-options-grid"></div>
+                    <div class="millionaire-lifelines">
+                        <button class="lifeline-btn" id="lifeline-call">Call a Friend</button>
+                        <button class="lifeline-btn" id="lifeline-fifty">50:50</button>
+                        <button class="lifeline-btn" id="lifeline-audience">Audience Vote</button>
+                        <button class="lifeline-btn" id="lifeline-host">Ask the Host</button>
+                    </div>
+                    <button id="millionaire-next-btn" class="primary-btn hidden">Next Question</button>
+                    <p id="millionaire-status-text" class="subtitle" style="margin-top: 15px;">Use a lifeline to stop the timer.</p>
+                    <button id="millionaire-skip-suspense-btn" class="primary-btn" style="margin-top: 10px; display: none; width: auto; padding: 12px 24px; font-size: 1.05rem; background: var(--accent); margin-left: auto; margin-right: auto; box-shadow: 0 0 15px rgba(253, 121, 168, 0.4);">Skip Suspense</button>
+                </div>
+                <aside class="millionaire-sidebar collapsed" id="millionaire-sidebar">
+                    <button id="millionaire-prize-toggle" class="millionaire-prize-toggle" aria-expanded="false">▶</button>
+                    <div class="millionaire-prize-content">
+                        <div class="millionaire-contestant-block">
+                            <div class="millionaire-contestant-label">Contestant</div>
+                            <div id="millionaire-contestant-name" class="millionaire-contestant-name">---</div>
+                        </div>
+                        <h4>Prize Ladder</h4>
+                        <div id="millionaire-prize-list"></div>
+                    </div>
+                </aside>
+            </div>
+        </div>
+
+        <!-- Result Screen -->
+        <div id="result-screen" class="screen">
+            <h2 class="result-title" id="result-title">Category Complete!</h2>
+            <div class="score-display">
+                <div class="score-circle">
+                    <span id="final-score">0</span><span class="score-total">/10</span>
+                </div>
+            </div>
+            <p id="result-message" class="result-message">You need 7 to pass.</p>
+            <button id="finish-btn" class="primary-btn">Back to Main Menu</button>
+        </div>
+
+        <!-- QotD Screen -->
+        <div id="qotd-screen" class="screen">
+            <button class="back-btn" id="qotd-back-btn" style="position: relative; top: 0; left: 0; margin-bottom: 20px;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </button>
+            <h2 class="screen-title">Question of the Day</h2>
+            <p class="subtitle" id="qotd-category-title" style="color: var(--secondary); font-weight: bold; margin-top: 10px;"></p>
+            
+            <div class="question-container" style="margin-top: 20px;">
+                <h3 id="qotd-text">Question text</h3>
+            </div>
+            
+            <div class="options-container" id="qotd-options"></div>
+
+            <button id="qotd-finish-btn" class="primary-btn hidden" style="margin-top: 20px;">Return</button>
+        </div>
+
+        <!-- Profile Screen -->
+        <div id="profile-screen" class="screen">
+            <button class="back-btn" id="back-to-welcome-from-profile">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </button>
+            <h2 class="screen-title" style="margin-top: 40px;">Profile</h2>
+            <div style="text-align: center; margin-top: 20px;">
+                <div style="display:flex; align-items:center; justify-content:center; gap:12px;">
+                    <img id="profile-screen-avatar" class="profile-screen-avatar" src="" alt="Profile" />
+                    <h3 style="font-size: 2rem; color: var(--secondary);">⭐ <span id="profile-points">0</span> Points</h3>
+                </div>
+                <div style="margin-top:12px; display:flex; justify-content:center; align-items:center;">
+                    <button id="upload-photo-btn" class="primary-btn" style="padding:8px 12px; width: auto; font-size:0.95rem;">Upload Photo</button>
+                    <button id="remove-photo-btn" style="display:none; padding:8px 12px; width:auto; font-size:0.95rem;">Remove Photo</button>
+                </div>
+            </div>
+            <h3 style="margin-top: 30px; border-bottom: 1px solid var(--glass-border); padding-bottom: 10px;">Achievements</h3>
+            <div id="achievements-list" style="display: flex; flex-direction: column; gap: 15px; margin-top: 20px; overflow-y: auto; max-height: 50vh;">
+                <!-- Achievements injected by JS -->
+            </div>
+        </div>
+
+        <!-- Minesweeper Size Selector Screen -->
+        <div id="minesweeper-size-screen" class="screen">
+            <button class="back-btn" id="back-to-menu-from-minesweeper">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </button>
+            <h2 id="minesweeper-size-title" class="screen-title" style="margin-top: 60px;">Minesweeper</h2>
+            <p class="subtitle">Select Difficulty</p>
+            <div style="margin-bottom: 18px; display: flex; align-items: center; gap: 12px;">
+                <label class="switch">
+                    <input id="minesweeper-otter-mode-toggle" type="checkbox" />
+                    <span class="slider round"></span>
+                </label>
+                <span style="font-size:0.95rem; color: var(--text);">Bombs / Otters</span>
+            </div>
+            <div class="difficulty-list">
+                <button class="diff-btn" data-diff="easy">Easy (8x8 - 10 mines)</button>
+                <button class="diff-btn" data-diff="medium">Medium (12x12 - 30 mines)</button>
+                <button class="diff-btn" data-diff="hard">Hard (16x16 - 99 mines)</button>
+            </div>
+        </div>
+
+        <!-- Minesweeper Game Screen -->
+        <div id="minesweeper-screen" class="screen">
+            <button class="back-btn" id="back-to-menu-from-minesweeper-game">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </button>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2 id="minesweeper-game-title" class="screen-title" style="margin: 30px 0 0 0; font-size: 1.5rem;">Minesweeper</h2>
+                <div style="display: flex; gap: 10px;">
+                    <div id="minesweeper-timer" style="background: var(--glass-bg); padding: 8px 15px; border-radius: 15px; border: 1px solid var(--secondary); font-weight: bold;">⏱️ 0:00</div>
+                    <div id="minesweeper-mine-count" style="background: var(--glass-bg); padding: 8px 15px; border-radius: 15px; border: 1px solid var(--accent); font-weight: bold;">💣 10</div>
+                </div>
+            </div>
+            <div id="minesweeper-board" class="minesweeper-board"></div>
+            <div id="minesweeper-result" class="minesweeper-result" style="display: none;"></div>
+            <div class="sudoku-leaderboard-panel minesweeper-leaderboard-panel">
+                <div class="sudoku-leaderboard-header">
+                    <h3>Minesweeper Leaderboard</h3>
+                    <div style="display:flex; gap: 10px; align-items:center;">
+                        <span id="minesweeper-pr" style="font-size:0.95rem; color: var(--secondary);">PR: -</span>
+                        <button id="minesweeper-clear-leaderboard-btn" class="primary-btn" style="padding: 8px 14px; font-size: 0.85rem; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12);">Clear Leaderboard</button>
+                    </div>
+                </div>
+                <div id="minesweeper-leaderboard-list" class="leaderboard-list"></div>
+            </div>
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button id="minesweeper-new-game-btn" class="primary-btn" style="flex: 1;">New Game</button>
+                <button id="minesweeper-back-btn" class="primary-btn" style="flex: 1; background: var(--accent);">Back to Menu</button>
+            </div>
+        </div>
+
+        <!-- Sudoku Difficulty Selector Screen -->
+        <div id="sudoku-size-screen" class="screen">
+            <button class="back-btn" id="back-to-menu-from-sudoku">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </button>
+            <h2 class="screen-title" style="margin-top: 60px;">Sudoku</h2>
+            <p class="subtitle">Select Difficulty</p>
+            <div class="difficulty-list">
+                <button class="diff-btn" data-diff="easy">Easy (40 clues)</button>
+                <button class="diff-btn" data-diff="medium">Medium (30 clues)</button>
+                <button class="diff-btn" data-diff="hard">Hard (20 clues)</button>
+            </div>
+        </div>
+
+        <!-- Sudoku Game Screen -->
+        <div id="sudoku-screen" class="screen">
+            <button class="back-btn" id="back-to-menu-from-sudoku-game">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </button>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2 class="screen-title" style="margin: 0; font-size: 1.5rem;">Sudoku</h2>
+                <div style="display: flex; gap: 10px;">
+                    <div id="sudoku-timer" style="background: var(--glass-bg); padding: 8px 15px; border-radius: 15px; border: 1px solid var(--secondary); font-weight: bold;">⏱️ 0:00</div>
+                    <div id="sudoku-mistakes" style="background: var(--glass-bg); padding: 8px 15px; border-radius: 15px; border: 1px solid var(--accent); font-weight: bold;">❌ 0 / 3</div>
+                </div>
+            </div>
+            <div id="sudoku-board" class="sudoku-board"></div>
+            <div id="sudoku-result" class="sudoku-result" style="display: none;"></div>
+            <div class="sudoku-leaderboard-panel">
+                <div class="sudoku-leaderboard-header">
+                    <h3>Sudoku Leaderboard</h3>
+                    <span id="sudoku-pr">PR: -</span>
+                </div>
+                <div style="display: flex; justify-content: flex-end; margin-bottom: 12px;">
+                    <button id="sudoku-clear-leaderboard-btn" class="primary-btn" style="padding: 8px 14px; font-size: 0.85rem; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12);">Clear Leaderboard</button>
+                </div>
+                <div id="sudoku-leaderboard-list" class="leaderboard-list"></div>
+            </div>
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button id="sudoku-new-game-btn" class="primary-btn" style="flex: 1;">New Game</button>
+                <button id="sudoku-back-btn" class="primary-btn" style="flex: 1; background: var(--accent);">Back to Menu</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Toast Container -->
+    <div id="toast-container" style="position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; gap: 10px; z-index: 1000;"></div>
+    
+    <!-- Hidden file input for profile picture -->
+    <input type="file" id="profile-input" accept="image/*" style="display:none" />
+    
+    <!-- Audio Elements -->
+    <audio id="bg-music" loop>
+        <source src="bg-music.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="sfx-correct">
+        <source src="sfx-correct.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="sfx-incorrect">
+        <source src="sfx-incorrect.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="sfx-pop">
+        <source src="assets/pop_sound.wav" type="audio/wav">
+    </audio>
+    <audio id="millionaire-name-selected">
+        <source src="assets/name_selected.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="millionaire-bg-1" loop>
+        <source src="assets/questions_100-1000.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="millionaire-bg-2" loop>
+        <source src="assets/questions_2000-32000.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="millionaire-bg-3" loop>
+        <source src="assets/questions_64000-500000.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="millionaire-bg-4" loop>
+        <source src="assets/questions_1000000.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="millionaire-answer-pending">
+        <source src="assets/answer_choice.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="millionaire-answer-correct">
+        <source src="assets/correct_answer.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="millionaire-answer-wrong">
+        <source src="assets/wrong_answer.mp3" type="audio/mpeg">
+    </audio>
+    <!-- Millionaire intro and name selection audio -->
+    <audio id="millionaire-intro">
+        <source src="assets/intro_track.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="millionaire-name-loop" loop>
+        <source src="assets/name_selection.mp3" type="audio/mpeg">
+    </audio>
+    
+    <!-- Data and Logic -->
+    <script src="questions.js?v=2"></script>
+    <script src="minesweeper.js?v=2"></script>
+    <script src="sudoku.js?v=2"></script>
+    <script src="app.js?v=2"></script>
+</body>
+</html>
