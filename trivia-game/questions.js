@@ -288,16 +288,16 @@ const triviaData = {
         ]
     },
     personal: [
-        { q: "When is Radu's birthday?", options: ["18th March 1998", "19th March 1998", "18th March 1999", "19th March 1974"], answer: 1 },
-        { q: "What pet did Radu never have?", options: ["Bunny", "Cat", "Rat", "Dog"], answer: 0 },
-        { q: "How tall is he? Exact passport cm measurement", options: ["180cm", "182cm", "181cm", "Tall Enough"], answer: 2 },
-        { q: "What is his comfort food?", options: ["Pineapple Pizza", "Langos", "Loaded Fries with Feta", "Pasta Carbonara"], answer: 2 },
-        { q: "How many push-ups can he do at this time?", options: ["0-5", "5-15", "15-25", "25+"], answer: 3 },
-        { q: "What is Radu's alter ego rapper name?", options: ["Lil Gipsy", "Lil Trans (short for Transylvanian)", "Lil Dicky", "Lil Owl"], answer: 3 },
-        { q: "Which of these countries has Radu never been to?", options: ["Moldova", "Spain", "China", "Vietnam"], answer: 0 },
-        { q: "Why did Radu loose his hair?", options: ["Too much testosterone", "So other guys can have a chance", "All true Romanians are bald", "He is Hairphobic"], answer: 1 },
-        { q: "What was Radu's pet rat's name?", options: ["Lipo", "Mipo", "Dipo", "Bipo"], answer: 3 },
-        { q: "What does Radu love more than anything in the world?", options: ["His Motorcycle", "Blacky", "Eating food", "Bianka"], answer: 3 }
+        { q: "x?", options: ["x", "x", "x", "x"], answer: 1 },
+        { q: "x", options: ["x", "x", "x", "x"], answer: 0 },
+        { q: "x", options: ["x", "x", "x", "x"], answer: 2 },
+        { q: "x", options: ["x", "x", "x", "x"], answer: 2 },
+        { q: "x", options: ["x", "x", "x", "x"], answer: 3 },
+        { q: "x", options: ["x", "x", "x", "x"], answer: 3 },
+        { q: "x", options: ["x", "x", "x", "x"], answer: 0 },
+        { q: "x", options: ["x", "x", "x", "x"], answer: 1 },
+        { q: "x", options: ["x", "x", "x", "x"], answer: 3 },
+        { q: "x", options: ["x", "x", "x", "x"], answer: 3 }
     ]
 };
 
