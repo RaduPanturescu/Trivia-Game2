@@ -26,6 +26,7 @@ const screens = {
     result: document.getElementById('result-screen'),
     qotd: document.getElementById('qotd-screen'),
     profile: document.getElementById('profile-screen'),
+    workout: document.getElementById('workout-screen'),
     millionaireTitle: document.getElementById('millionaire-title-screen'),
     millionaireName: document.getElementById('millionaire-name-screen'),
     millionaire: document.getElementById('millionaire-screen'),
@@ -47,6 +48,7 @@ const exitGameBtn = document.getElementById('exit-game-btn');
 const nextBtn = document.getElementById('next-btn');
 const finishBtn = document.getElementById('finish-btn');
 const resetProfileBtn = document.getElementById('reset-profile-btn');
+const resetAllProgressBtn = document.getElementById('reset-all-progress-btn');
 const optionsContainer = document.getElementById('options-container');
 
 const millionaireWelcomeBtn = document.getElementById('millionaire-welcome-btn');
@@ -515,6 +517,33 @@ backToMenuBtn.addEventListener('click', () => {
     showScreen('menu');
 });
 
+const workoutWelcomeBtn = document.getElementById('workout-welcome-btn');
+const workoutMenuBtn = document.getElementById('workout-program-btn');
+const backToMenuFromWorkout = document.getElementById('back-to-menu-from-workout');
+
+if (workoutWelcomeBtn) {
+    workoutWelcomeBtn.addEventListener('click', () => {
+        playPopSound();
+        showScreen('workout');
+        renderWorkoutPlanner();
+    });
+}
+
+if (workoutMenuBtn) {
+    workoutMenuBtn.addEventListener('click', () => {
+        playPopSound();
+        showScreen('workout');
+        renderWorkoutPlanner();
+    });
+}
+
+if (backToMenuFromWorkout) {
+    backToMenuFromWorkout.addEventListener('click', () => {
+        playPopSound();
+        showScreen('welcome');
+    });
+}
+
 finishBtn.addEventListener('click', () => {
     playPopSound();
     showScreen('welcome');
@@ -531,6 +560,15 @@ if (resetProfileBtn) {
     resetProfileBtn.addEventListener('click', () => {
         playPopSound();
         resetProfile();
+    });
+}
+
+if (resetAllProgressBtn) {
+    resetAllProgressBtn.addEventListener('click', () => {
+        playPopSound();
+        if (!confirm('Reset every stat, achievement, and workout plan across the app? This is permanent.')) return;
+        localStorage.clear();
+        window.location.reload();
     });
 }
 
@@ -827,7 +865,9 @@ function clearMillionaireCountdowns() {
 function unlockAchievement(id) {
     if (!achievements[id] || achievements[id].unlocked) return;
     achievements[id].unlocked = true;
-    showToast(achievements[id]);
+    if (!(typeof workoutAchievementTemplates !== 'undefined' && workoutAchievementTemplates[id])) {
+        showToast(achievements[id]);
+    }
     renderAchievements();
     saveData();
 }
@@ -837,15 +877,42 @@ function showToast(ach) {
     const container = document.getElementById('toast-container');
     const toast = document.createElement('div');
     toast.className = 'toast';
+    const isAchievement = typeof achievements !== 'undefined'
+        && ach.id
+        && achievements[ach.id]
+        && achievements[ach.id] === ach;
     toast.innerHTML = `
         <div class="toast-icon">${ach.icon}</div>
         <div class="toast-content">
-            <h4 style="margin: 0; color: var(--secondary); font-size: 1.1rem;">Achievement Unlocked!</h4>
+            <h4 style="margin: 0; color: var(--secondary); font-size: 1.1rem;">${isAchievement ? 'Achievement Unlocked!' : 'Notice'}</h4>
             <p style="margin: 5px 0 0 0; color: white; font-size: 0.9rem;">${ach.name}</p>
         </div>
     `;
     container.appendChild(toast);
     setTimeout(() => toast.remove(), 4500);
+}
+
+function showTaskCompleteToast(description) {
+    const container = document.getElementById('toast-container');
+    if (!container) return;
+    playPopSound();
+    const toast = document.createElement('div');
+    toast.className = 'toast task-complete-toast';
+    const icon = document.createElement('div');
+    icon.className = 'toast-icon';
+    icon.textContent = '✅';
+    const content = document.createElement('div');
+    content.className = 'toast-content';
+    const title = document.createElement('h4');
+    title.textContent = 'Task Complete';
+    title.style.cssText = 'margin: 0; color: var(--secondary); font-size: 1.1rem;';
+    const message = document.createElement('p');
+    message.textContent = description;
+    message.style.cssText = 'margin: 5px 0 0; color: white; font-size: 0.9rem;';
+    content.append(title, message);
+    toast.append(icon, content);
+    container.appendChild(toast);
+    setTimeout(() => toast.remove(), 6500);
 }
 
 function renderAchievements() {
@@ -880,6 +947,1375 @@ function renderAchievements() {
         
         list.appendChild(card);
     });
+}
+
+const workoutExerciseCatalog = [
+    { id: 'bench-press', name: 'Bench Press', category: 'chest', sets: 4, reps: 8, weight: 20, duration: 45, rest: 60, description: 'Press from a flat bench with a strong full-body brace.' },
+    { id: 'incline-press', name: 'Incline Press', category: 'chest', sets: 3, reps: 10, weight: 15, duration: 45, rest: 60, description: 'Target the upper chest with controlled bar speed.' },
+    { id: 'push-up', name: 'Push Ups', category: 'upper body', sets: 3, reps: 12, weight: 0, duration: 35, rest: 45, description: 'Bodyweight press that hits chest, shoulders and triceps.' },
+    { id: 'overhead-press', name: 'Overhead Press', category: 'upper body', sets: 4, reps: 8, weight: 10, duration: 40, rest: 60, description: 'Drive through with strict pressing form.' },
+    { id: 'bicep-curl', name: 'Bicep Curl', category: 'arms', sets: 3, reps: 12, weight: 8, duration: 35, rest: 45, description: 'Curl the weight with a strong squeeze at the top.' },
+    { id: 'tricep-dips', name: 'Tricep Dips', category: 'arms', sets: 3, reps: 10, weight: 0, duration: 35, rest: 45, description: 'Use bench or chair to control each rep.' },
+    { id: 'squat', name: 'Back Squat', category: 'legs', sets: 4, reps: 8, weight: 35, duration: 50, rest: 75, description: 'Standard lower-body lift to build strength and power.' },
+    { id: 'lunge', name: 'Walking Lunge', category: 'legs', sets: 3, reps: 10, weight: 10, duration: 40, rest: 50, description: 'Strong single-leg control with an upright posture.' },
+    { id: 'hip-thrust', name: 'Hip Thrust', category: 'glutes', sets: 4, reps: 10, weight: 25, duration: 45, rest: 60, description: 'Drive through the hips and keep the ribs down.' },
+    { id: 'deadlift', name: 'Romanian Deadlift', category: 'glutes', sets: 3, reps: 8, weight: 30, duration: 45, rest: 60, description: 'Hinge at the hips and control the lower back.' },
+    { id: 'kettlebell-swing', name: 'Kettlebell Swing', category: 'kettlebell', sets: 4, reps: 12, weight: 12, duration: 35, rest: 45, description: 'Explosive hip drive and a full range of motion.' },
+    { id: 'goblet-squat', name: 'Goblet Squat', category: 'kettlebell', sets: 3, reps: 12, weight: 12, duration: 40, rest: 45, description: 'Hold the kettlebell close and maintain depth.' },
+    { id: 'plank', name: 'Plank Hold', category: 'core', sets: 3, reps: 1, weight: 0, duration: 45, rest: 30, description: 'Keep the torso braced and maintain a straight line.' },
+    { id: 'jump-rope', name: 'Jump Rope', category: 'conditioning', sets: 4, reps: 20, weight: 0, duration: 40, rest: 30, description: 'Short cardio bursts to keep the heart rate up.' }
+];
+
+const workoutAchievementTemplates = {
+    firstWorkout: { id: 'firstWorkout', name: 'First Lift', desc: 'Complete your first workout day.', icon: '🏆', unlocked: false },
+    workout3: { id: 'workout3', name: '3 Exercise Landmark', desc: 'Complete 3 total exercises.', icon: '💪', unlocked: false },
+    workout5: { id: 'workout5', name: '5 Exercise Landmark', desc: 'Complete 5 total exercises.', icon: '🔥', unlocked: false },
+    workout10: { id: 'workout10', name: '10 Exercise Landmark', desc: 'Complete 10 total exercises.', icon: '⚡', unlocked: false },
+    workout15: { id: 'workout15', name: '15 Exercise Landmark', desc: 'Complete 15 total exercises.', icon: '🌟', unlocked: false },
+    workout30: { id: 'workout30', name: '30 Exercise Landmark', desc: 'Complete 30 total exercises.', icon: '👑', unlocked: false }
+};
+
+const workoutState = {
+    currentWeekStart: getMonday(new Date()),
+    selectedDayIndex: 0,
+    activeFilter: 'all',
+    editingExerciseId: null,
+    editingExerciseMode: 'new',
+    timerInterval: null,
+    activeDayDate: null,
+    activeExerciseIndex: null,
+    timerRemaining: 0,
+    timerMode: 'idle',
+    editingDayExercise: false,
+    stopwatchMode: 'stopwatch',
+    stopwatchRunning: false,
+    stopwatchInterval: null,
+    stopwatchElapsed: 0,
+    stopwatchRemaining: 300,
+    stopwatchTotal: 300,
+    weeks: []
+};
+
+const WORKOUT_WEEKLY_TEMPLATE_KEY = 'triviaWorkoutWeeklyTemplate';
+
+function getWorkoutWeeklyTemplates() {
+    try {
+        const templates = JSON.parse(localStorage.getItem(WORKOUT_WEEKLY_TEMPLATE_KEY) || '{}');
+        return templates && typeof templates === 'object' ? templates : {};
+    } catch (error) {
+        return {};
+    }
+}
+
+function cloneWorkoutExercises(exercises, dayDate) {
+    return (exercises || []).map((exercise, index) => ({
+        ...exercise,
+        id: `${exercise.id || 'exercise'}-${dayDate}-${index}`,
+        completed: false,
+        currentSet: 1
+    }));
+}
+
+function saveWorkoutDayTemplate(day, dayIndex) {
+    if (!day) return;
+    const templates = getWorkoutWeeklyTemplates();
+    templates[dayIndex] = {
+        type: day.type,
+        exercises: (day.exercises || []).map(({ id, completed, currentSet, ...exercise }) => ({ ...exercise }))
+    };
+    localStorage.setItem(WORKOUT_WEEKLY_TEMPLATE_KEY, JSON.stringify(templates));
+
+    const currentWeekStart = isoDate(parseWorkoutDate(workoutState.currentWeekStart));
+    workoutState.weeks.forEach(week => {
+        if (week.weekStart <= currentWeekStart) return;
+        const futureDay = week.days[dayIndex];
+        if (!futureDay) return;
+        futureDay.type = day.type;
+        futureDay.exercises = day.type === 'workout' ? cloneWorkoutExercises(day.exercises, futureDay.date) : [];
+        futureDay.completed = false;
+        delete futureDay.savedExercisesForWorkout;
+    });
+    saveWorkoutData();
+}
+
+function ensureWorkoutWeeklyTemplates() {
+    const templates = getWorkoutWeeklyTemplates();
+    const currentDateWeekStart = isoDate(getMonday(new Date()));
+    const week = workoutState.weeks.find(item => item.weekStart === currentDateWeekStart) || getWorkoutWeekForCurrentView();
+    let changed = false;
+    week.days.forEach((day, index) => {
+        if (templates[index]) return;
+        templates[index] = {
+            type: day.type,
+            exercises: (day.exercises || []).map(({ id, completed, currentSet, ...exercise }) => ({ ...exercise }))
+        };
+        changed = true;
+    });
+    if (changed) localStorage.setItem(WORKOUT_WEEKLY_TEMPLATE_KEY, JSON.stringify(templates));
+}
+
+function getWorkoutCategories() {
+    const saved = JSON.parse(localStorage.getItem('triviaWorkoutCategories') || 'null');
+    const base = ['chest', 'upper body', 'arms', 'legs', 'glutes', 'core', 'kettlebell', 'conditioning'];
+    if (!saved || !Array.isArray(saved) || !saved.length) {
+        return base;
+    }
+    return Array.from(new Set([...base, ...saved]));
+}
+
+function saveWorkoutCategories(categories) {
+    localStorage.setItem('triviaWorkoutCategories', JSON.stringify(categories));
+}
+
+function hydrateWorkoutCategoriesSelect() {
+    const categorySelect = document.getElementById('workout-exercise-category');
+    if (!categorySelect) return;
+    const categories = getWorkoutCategories();
+    const selected = categorySelect.value;
+    categorySelect.innerHTML = '<option value="">Select a category</option>' + categories.map(cat => `<option value="${cat}">${cat}</option>`).join('');
+    categorySelect.value = categories.includes(selected) ? selected : '';
+}
+
+function addWorkoutCategory() {
+    const input = document.getElementById('workout-new-category-input');
+    const category = (input?.value || '').trim();
+    if (!category) return;
+    const categories = getWorkoutCategories();
+    const normalized = category.toLowerCase();
+    if (!categories.includes(normalized)) {
+        categories.push(normalized);
+        saveWorkoutCategories(categories);
+    }
+    input.value = '';
+    hydrateWorkoutCategoriesSelect();
+    document.getElementById('workout-exercise-category').value = normalized;
+    workoutState.activeFilter = 'all';
+    renderWorkoutPlanner();
+}
+
+function isoDate(d) {
+    const date = parseWorkoutDate(d);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
+function parseWorkoutDate(value) {
+    if (typeof value === 'string') {
+        const match = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+        if (match) return new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+    }
+    return new Date(value);
+}
+
+function getMonday(date) {
+    const d = parseWorkoutDate(date);
+    const day = d.getDay();
+    const diff = (day === 0 ? -6 : 1 - day);
+    d.setHours(0, 0, 0, 0);
+    d.setDate(d.getDate() + diff);
+    return d;
+}
+
+function createWorkoutDay(date, type, exercises) {
+    return {
+        date: isoDate(date),
+        dayLabel: date.toLocaleDateString(undefined, { weekday: 'short' }),
+        type: type || 'rest',
+        exercises: exercises || [],
+        completed: false
+    };
+}
+
+function createDefaultWorkoutWeek(weekStart) {
+    const days = [];
+    const defaults = [
+        { type: 'workout', exercises: [
+            { ...workoutExerciseCatalog[0], id: `${workoutExerciseCatalog[0].id}-${Date.now()}-1`, completed: false },
+            { ...workoutExerciseCatalog[7], id: `${workoutExerciseCatalog[7].id}-${Date.now()}-2`, completed: false }
+        ] },
+        { type: 'workout', exercises: [
+            { ...workoutExerciseCatalog[6], id: `${workoutExerciseCatalog[6].id}-${Date.now()}-3`, completed: false },
+            { ...workoutExerciseCatalog[9], id: `${workoutExerciseCatalog[9].id}-${Date.now()}-4`, completed: false }
+        ] },
+        { type: 'rest', exercises: [] },
+        { type: 'workout', exercises: [
+            { ...workoutExerciseCatalog[2], id: `${workoutExerciseCatalog[2].id}-${Date.now()}-5`, completed: false },
+            { ...workoutExerciseCatalog[3], id: `${workoutExerciseCatalog[3].id}-${Date.now()}-6`, completed: false }
+        ] },
+        { type: 'workout', exercises: [
+            { ...workoutExerciseCatalog[8], id: `${workoutExerciseCatalog[8].id}-${Date.now()}-7`, completed: false },
+            { ...workoutExerciseCatalog[12], id: `${workoutExerciseCatalog[12].id}-${Date.now()}-8`, completed: false }
+        ] },
+        { type: 'workout', exercises: [
+            { ...workoutExerciseCatalog[10], id: `${workoutExerciseCatalog[10].id}-${Date.now()}-9`, completed: false },
+            { ...workoutExerciseCatalog[11], id: `${workoutExerciseCatalog[11].id}-${Date.now()}-10`, completed: false }
+        ] },
+        { type: 'rest', exercises: [] }
+    ];
+
+    const templates = getWorkoutWeeklyTemplates();
+    const startDate = parseWorkoutDate(weekStart);
+    for (let i = 0; i < 7; i++) {
+        const date = new Date(startDate);
+        date.setDate(startDate.getDate() + i);
+        const dateKey = isoDate(date);
+        const template = templates[i];
+        const config = template || defaults[i];
+        const exercises = config.type === 'workout'
+            ? cloneWorkoutExercises(template ? config.exercises : config.exercises, dateKey)
+            : [];
+        days.push(createWorkoutDay(date, config.type, exercises));
+    }
+    return { weekStart: isoDate(weekStart), days };
+}
+
+function ensureWorkoutState() {
+    const saved = JSON.parse(localStorage.getItem('triviaWorkoutProgram') || 'null');
+    const baseWeek = getMonday(new Date());
+
+    if (saved && Array.isArray(saved.weeks) && saved.weeks.length) {
+        workoutState.weeks = saved.weeks;
+        workoutState.currentWeekStart = saved.currentWeekStart || isoDate(baseWeek);
+    } else {
+        workoutState.weeks = [createDefaultWorkoutWeek(baseWeek)];
+        workoutState.currentWeekStart = isoDate(baseWeek);
+        saveWorkoutData();
+    }
+
+    const currentStart = isoDate(baseWeek);
+    if (!workoutState.weeks.some(week => week.weekStart === currentStart)) {
+        workoutState.weeks.unshift(createDefaultWorkoutWeek(baseWeek));
+    }
+
+    workoutState.currentWeekStart = workoutState.currentWeekStart || currentStart;
+    workoutState.selectedDayIndex = (new Date().getDay() + 6) % 7;
+    stopWorkoutTimer();
+}
+
+function saveWorkoutData() {
+    const payload = {
+        currentWeekStart: workoutState.currentWeekStart,
+        weeks: workoutState.weeks
+    };
+    localStorage.setItem('triviaWorkoutProgram', JSON.stringify(payload));
+}
+
+function getSavedWorkoutPlans() {
+    try {
+        const saved = JSON.parse(localStorage.getItem('triviaWorkoutSavedPlans') || '[]');
+        return Array.isArray(saved) ? saved : [];
+    } catch (error) {
+        return [];
+    }
+}
+
+function getWorkoutPlanSnapshot(name) {
+    return {
+        id: `plan-${Date.now()}`,
+        name,
+        savedAt: new Date().toISOString(),
+        currentWeekStart: workoutState.currentWeekStart,
+        weeks: JSON.parse(JSON.stringify(workoutState.weeks)),
+        weeklyTemplates: getWorkoutWeeklyTemplates(),
+        categories: getWorkoutCategories(),
+        customExercises: JSON.parse(localStorage.getItem('triviaWorkoutCustomExercises') || '[]')
+    };
+}
+
+function renderSavedWorkoutPlans() {
+    const select = document.getElementById('workout-saved-plans-select');
+    const switchButton = document.getElementById('workout-switch-plan-btn');
+    if (!select || !switchButton) return;
+    const plans = getSavedWorkoutPlans();
+    const selected = select.value;
+    select.replaceChildren(new Option('Choose a saved plan', ''));
+    plans.forEach(plan => select.add(new Option(plan.name, plan.id)));
+    if (plans.some(plan => plan.id === selected)) select.value = selected;
+    switchButton.disabled = plans.length === 0 || !select.value;
+}
+
+function saveNamedWorkoutPlan() {
+    const nameInput = document.getElementById('workout-plan-name-input');
+    const name = (nameInput?.value || '').trim();
+    if (!name) {
+        showToast({ icon: '⚠️', name: 'Plan name required', desc: 'Enter a name before saving this workout plan.' });
+        nameInput?.focus();
+        return;
+    }
+    const plans = getSavedWorkoutPlans();
+    const snapshot = getWorkoutPlanSnapshot(name);
+    plans.push(snapshot);
+    localStorage.setItem('triviaWorkoutSavedPlans', JSON.stringify(plans));
+    if (nameInput) nameInput.value = '';
+    renderSavedWorkoutPlans();
+    document.getElementById('workout-saved-plans-select').value = snapshot.id;
+    document.getElementById('workout-switch-plan-btn').disabled = false;
+    showToast({ icon: '💾', name: 'Workout plan saved', desc: `${name} is ready to switch to later.` });
+}
+
+function switchToSavedWorkoutPlan() {
+    const planId = document.getElementById('workout-saved-plans-select')?.value;
+    const plan = getSavedWorkoutPlans().find(item => item.id === planId);
+    if (!plan) return;
+    if (!confirm(`Switch to “${plan.name}”? Your current workout plan will be replaced by the saved copy.`)) return;
+    workoutState.weeks = JSON.parse(JSON.stringify(plan.weeks));
+    workoutState.currentWeekStart = plan.currentWeekStart || plan.weeks[0].weekStart;
+    workoutState.selectedDayIndex = (new Date().getDay() + 6) % 7;
+    localStorage.setItem(WORKOUT_WEEKLY_TEMPLATE_KEY, JSON.stringify(plan.weeklyTemplates || {}));
+    localStorage.setItem('triviaWorkoutCategories', JSON.stringify(plan.categories || getWorkoutCategories()));
+    localStorage.setItem('triviaWorkoutCustomExercises', JSON.stringify(plan.customExercises || []));
+    saveWorkoutData();
+    hydrateWorkoutCategoriesSelect();
+    renderWorkoutPlanner();
+    showToast({ icon: '📂', name: 'Workout plan switched', desc: `Loaded ${plan.name}.` });
+}
+
+function resetActiveWorkoutProgram() {
+    if (!confirm('Start a new workout program? This will remove all workouts from the active plan.')) return;
+    if (!confirm('Are you sure? Every day in the active plan will become a rest day. Your saved plans, achievements, and stats will remain.')) return;
+
+    snapshotWorkoutMetricBaseline();
+    stopWorkoutTimer();
+    workoutState.activeDayDate = null;
+    workoutState.activeExerciseIndex = null;
+    workoutState.timerMode = 'idle';
+    workoutState.timerRemaining = 0;
+    const currentStart = isoDate(getMonday(new Date()));
+    if (!workoutState.weeks.length) workoutState.weeks = [createDefaultWorkoutWeek(parseWorkoutDate(currentStart))];
+    workoutState.weeks.forEach(week => {
+        week.days = (week.days || []).map(day => ({
+            date: day.date,
+            dayLabel: day.dayLabel,
+            type: 'rest',
+            exercises: [],
+            completed: false
+        }));
+        while (week.days.length < 7) {
+            const date = parseWorkoutDate(week.weekStart);
+            date.setDate(date.getDate() + week.days.length);
+            week.days.push(createWorkoutDay(date, 'rest', []));
+        }
+    });
+    if (!workoutState.weeks.some(week => week.weekStart === currentStart)) {
+        workoutState.weeks.unshift(createDefaultWorkoutWeek(parseWorkoutDate(currentStart)));
+        const newest = workoutState.weeks.find(week => week.weekStart === currentStart);
+        newest.days.forEach(day => {
+            day.type = 'rest';
+            day.exercises = [];
+            day.completed = false;
+        });
+    }
+    const restTemplates = Object.fromEntries(Array.from({ length: 7 }, (_, index) => [index, { type: 'rest', exercises: [] }]));
+    localStorage.setItem(WORKOUT_WEEKLY_TEMPLATE_KEY, JSON.stringify(restTemplates));
+    workoutState.currentWeekStart = currentStart;
+    workoutState.selectedDayIndex = (new Date().getDay() + 6) % 7;
+    saveWorkoutData();
+    renderWorkoutPlanner();
+    showToast({ icon: '🆕', name: 'New program ready', desc: 'All days are now set as rest days. Your stats are preserved.' });
+}
+
+function getWorkoutWeekForCurrentView() {
+    const weekStart = isoDate(parseWorkoutDate(workoutState.currentWeekStart));
+    let week = workoutState.weeks.find(item => item.weekStart === weekStart);
+    if (!week) {
+        const date = parseWorkoutDate(workoutState.currentWeekStart);
+        week = createDefaultWorkoutWeek(date);
+        workoutState.weeks.unshift(week);
+    }
+    return week;
+}
+
+function getWorkoutDayForDate(dateString) {
+    const expectedWeekStart = isoDate(getMonday(parseWorkoutDate(dateString)));
+    const canonicalWeek = workoutState.weeks.find(week => week.weekStart === expectedWeekStart);
+    const canonicalDay = canonicalWeek?.days.find(day => day.date === dateString);
+    if (canonicalDay) return canonicalDay;
+    return workoutState.weeks.flatMap(week => week.days || []).find(day => day.date === dateString) || null;
+}
+
+function getCurrentWorkoutDay() {
+    const week = getWorkoutWeekForCurrentView();
+    return week.days[workoutState.selectedDayIndex] || week.days[0];
+}
+
+function setSelectedWorkoutDayType(type) {
+    const day = getCurrentWorkoutDay();
+    if (!day) return;
+
+    if (type === 'rest') {
+        day.savedExercisesForWorkout = (day.exercises || []).map(exercise => ({ ...exercise }));
+        day.type = 'rest';
+        day.exercises = [];
+        day.completed = false;
+    } else {
+        day.type = 'workout';
+        const templates = getWorkoutWeeklyTemplates();
+        const exercisesToRestore = day.savedExercisesForWorkout?.length
+            ? day.savedExercisesForWorkout
+            : templates[workoutState.selectedDayIndex]?.exercises || [];
+        day.exercises = cloneWorkoutExercises(exercisesToRestore, day.date);
+        delete day.savedExercisesForWorkout;
+        day.completed = false;
+    }
+
+    if (workoutState.activeDayDate === day.date) {
+        stopWorkoutTimer();
+        workoutState.activeDayDate = null;
+        workoutState.activeExerciseIndex = null;
+        workoutState.timerMode = 'idle';
+        workoutState.timerRemaining = 0;
+    }
+    saveWorkoutDayTemplate(day, workoutState.selectedDayIndex);
+    renderWorkoutPlanner();
+}
+
+function setSelectedWorkoutDay(index) {
+    workoutState.selectedDayIndex = index;
+    renderWorkoutPlanner();
+}
+
+function addCategoryFilterButtons() {
+    const custom = JSON.parse(localStorage.getItem('triviaWorkoutCustomExercises') || '[]');
+    const filters = ['all', ...Array.from(new Set([...workoutExerciseCatalog.map(ex => ex.category), ...custom.map(ex => ex.category), ...getWorkoutCategories()]))];
+    const container = document.getElementById('workout-category-filters');
+    if (!container) return;
+
+    container.innerHTML = '';
+    filters.forEach(cat => {
+        const btn = document.createElement('button');
+        btn.className = `filter-chip ${cat === workoutState.activeFilter ? 'active' : ''}`;
+        btn.textContent = cat === 'all' ? 'All' : cat;
+        btn.addEventListener('click', () => {
+            workoutState.activeFilter = cat;
+            renderWorkoutExerciseList();
+            renderWorkoutPlanner();
+        });
+        container.appendChild(btn);
+    });
+}
+
+function renderWorkoutExerciseList() {
+    const list = document.getElementById('workout-exercise-list');
+    if (!list) return;
+
+    const custom = JSON.parse(localStorage.getItem('triviaWorkoutCustomExercises') || '[]');
+    const allExercises = [...workoutExerciseCatalog, ...custom];
+    const filtered = workoutState.activeFilter === 'all'
+        ? allExercises
+        : allExercises.filter(ex => ex.category === workoutState.activeFilter);
+
+    list.innerHTML = '';
+    filtered.forEach(ex => {
+        const currentSet = Number(ex.currentSet || 1);
+        const item = document.createElement('div');
+        item.className = 'workout-exercise-item';
+        item.innerHTML = `
+            <div>
+                <strong>${ex.name}</strong>
+                <div class="exercise-item-meta">${ex.category} • ${ex.sets} sets • ${ex.reps} reps • ${ex.weight}kg ${ex.completed ? '• Finished' : `• Set ${Math.min(currentSet, Number(ex.sets || 1))}/${Number(ex.sets || 1)}`}</div>
+            </div>
+            <div class="exercise-item-actions">
+                <button data-build="add" data-id="${ex.id}">Add</button>
+                <button data-build="edit" data-id="${ex.id}" class="edit-exercise-btn">Edit</button>
+                ${String(ex.id).startsWith('custom-') ? `<button data-build="remove" data-id="${ex.id}" class="remove-exercise-btn">Remove</button>` : ''}
+            </div>
+        `;
+        item.querySelector('[data-build="add"]').addEventListener('click', () => {
+            addExerciseToSelectedDay(ex);
+        });
+        item.querySelector('[data-build="edit"]').addEventListener('click', () => {
+            populateExerciseEditor(ex);
+        });
+        item.querySelector('[data-build="remove"]')?.addEventListener('click', () => removeCustomExercise(ex.id));
+        list.appendChild(item);
+    });
+}
+
+function removeCustomExercise(exerciseId) {
+    const custom = JSON.parse(localStorage.getItem('triviaWorkoutCustomExercises') || '[]');
+    localStorage.setItem('triviaWorkoutCustomExercises', JSON.stringify(custom.filter(exercise => exercise.id !== exerciseId)));
+    workoutState.weeks.forEach(week => week.days.forEach(day => {
+        day.exercises = (day.exercises || []).filter(exercise => exercise.id !== exerciseId);
+        day.completed = day.exercises.length > 0 && day.exercises.every(exercise => exercise.completed);
+    }));
+    renderWorkoutPlanner();
+    saveWorkoutData();
+}
+
+function populateExerciseEditor(exercise, isDayExercise = false) {
+    const name = document.getElementById('workout-exercise-name');
+    const category = document.getElementById('workout-exercise-category');
+    const description = document.getElementById('workout-exercise-description');
+    const sets = document.getElementById('workout-exercise-sets');
+    const reps = document.getElementById('workout-exercise-reps');
+    const weight = document.getElementById('workout-exercise-weight');
+    const duration = document.getElementById('workout-exercise-duration');
+    const rest = document.getElementById('workout-exercise-rest');
+
+    if (!name || !category || !description || !sets || !reps || !weight || !duration || !rest) return;
+
+    workoutState.editingExerciseId = exercise.id;
+    workoutState.editingDayExercise = isDayExercise;
+    workoutState.editingExerciseMode = isDayExercise ? 'day' : 'library';
+    name.value = exercise.name;
+    description.value = exercise.description || '';
+    category.value = exercise.category || 'chest';
+    sets.value = exercise.sets || 3;
+    reps.value = exercise.reps || 10;
+    weight.value = exercise.weight || 0;
+    duration.value = exercise.duration || 45;
+    rest.value = exercise.rest || 60;
+    const saveButton = document.getElementById('workout-save-exercise-btn');
+    if (saveButton) saveButton.textContent = 'Save Exercise Changes';
+    openExerciseEditor(isDayExercise ? 'Edit Today’s Exercise' : 'Edit Exercise in List', isDayExercise
+        ? 'These changes apply to the selected day only.'
+        : 'Update this reusable exercise without changing any scheduled day.');
+}
+
+function openExerciseEditor(title = 'Create a New Exercise', description = 'Create an exercise for your reusable exercise list.') {
+    const modal = document.getElementById('workout-exercise-modal');
+    const editor = document.getElementById('workout-exercise-editor');
+    if (!modal || !editor) return;
+    document.getElementById('workout-exercise-modal-title').textContent = title;
+    document.getElementById('workout-exercise-modal-description').textContent = description;
+    editor.hidden = false;
+    editor.classList.add('exercise-editor-in-modal');
+    modal.hidden = false;
+}
+
+function closeExerciseEditor() {
+    const modal = document.getElementById('workout-exercise-modal');
+    const editor = document.getElementById('workout-exercise-editor');
+    if (modal) modal.hidden = true;
+    if (editor) editor.hidden = true;
+    clearExerciseEditor();
+    const saveButton = document.getElementById('workout-save-exercise-btn');
+    if (saveButton) saveButton.textContent = 'Add Exercise To List';
+}
+
+function clearExerciseEditor() {
+    const name = document.getElementById('workout-exercise-name');
+    const category = document.getElementById('workout-exercise-category');
+    const description = document.getElementById('workout-exercise-description');
+    const sets = document.getElementById('workout-exercise-sets');
+    const reps = document.getElementById('workout-exercise-reps');
+    const weight = document.getElementById('workout-exercise-weight');
+    const duration = document.getElementById('workout-exercise-duration');
+    const rest = document.getElementById('workout-exercise-rest');
+
+    if (name) name.value = '';
+    if (category) category.value = '';
+    if (description) description.value = '';
+    if (sets) sets.value = '';
+    if (reps) reps.value = '';
+    if (weight) weight.value = '';
+    if (duration) duration.value = '';
+    if (rest) rest.value = '';
+    workoutState.editingExerciseId = null;
+    workoutState.editingDayExercise = false;
+    workoutState.editingExerciseMode = 'new';
+}
+
+function saveExerciseFromEditor() {
+    const nameValue = document.getElementById('workout-exercise-name').value.trim();
+    const categoryValue = document.getElementById('workout-exercise-category').value;
+    const requiredFields = [
+        document.getElementById('workout-exercise-name'),
+        document.getElementById('workout-exercise-sets'),
+        document.getElementById('workout-exercise-reps'),
+        document.getElementById('workout-exercise-duration'),
+        document.getElementById('workout-exercise-rest')
+    ];
+    if (!categoryValue || requiredFields.some(field => !field.value.trim() || !field.checkValidity())) {
+        showToast({ icon: '⚠️', name: 'Exercise details required', desc: 'Name, category, sets, reps, timer, and rest are required.' });
+        return;
+    }
+
+    const descriptionValue = document.getElementById('workout-exercise-description').value.trim() || 'Custom exercise added to your weekly plan.';
+    const template = {
+        name: nameValue,
+        category: categoryValue,
+        sets: Number(document.getElementById('workout-exercise-sets').value),
+        reps: Number(document.getElementById('workout-exercise-reps').value),
+        weight: Number(document.getElementById('workout-exercise-weight').value || 0),
+        duration: Number(document.getElementById('workout-exercise-duration').value),
+        rest: Number(document.getElementById('workout-exercise-rest').value),
+        description: descriptionValue
+    };
+
+    if (workoutState.editingExerciseMode === 'day' || workoutState.editingDayExercise) {
+        const targetDay = getCurrentWorkoutDay();
+        if (!targetDay) return;
+        if (targetDay.type !== 'workout') targetDay.type = 'workout';
+        const existingExercise = targetDay.exercises.find(item => item.id === workoutState.editingExerciseId);
+        if (!existingExercise) {
+            showToast({ icon: '⚠️', name: 'Exercise no longer exists', desc: 'Select the exercise again and retry.' });
+            return;
+        }
+        Object.assign(existingExercise, {
+            ...template,
+            id: existingExercise.id,
+            completed: existingExercise.completed || false,
+            currentSet: existingExercise.currentSet || 1
+        });
+        targetDay.completed = targetDay.exercises.length > 0 && targetDay.exercises.every(ex => ex.completed);
+        saveWorkoutData();
+        closeExerciseEditor();
+        renderWorkoutPlanner();
+        showToast({ icon: '✅', name: 'Today’s exercise updated', desc: `${nameValue} was changed for this day only.` });
+        return;
+    }
+
+    const customExercises = JSON.parse(localStorage.getItem('triviaWorkoutCustomExercises') || '[]');
+    const editingLibraryExercise = workoutState.editingExerciseMode === 'library';
+    if (editingLibraryExercise) {
+        const customIndex = customExercises.findIndex(ex => ex.id === workoutState.editingExerciseId);
+        const original = workoutExerciseCatalog.find(ex => ex.id === workoutState.editingExerciseId);
+        if (customIndex >= 0) {
+            customExercises[customIndex] = { ...customExercises[customIndex], ...template };
+        } else {
+            customExercises.push({ ...original, ...template, id: `custom-${Date.now()}` });
+        }
+    } else {
+        customExercises.push({ ...template, id: `custom-${Date.now()}` });
+    }
+    localStorage.setItem('triviaWorkoutCustomExercises', JSON.stringify(customExercises));
+    const savedName = nameValue;
+    closeExerciseEditor();
+    renderWorkoutPlanner();
+    showToast({ icon: '✅', name: editingLibraryExercise ? 'Exercise updated' : 'Exercise added', desc: `${savedName} is in your exercise list.` });
+}
+
+function addExerciseToSelectedDay(exercise) {
+    const day = getCurrentWorkoutDay();
+    if (!day) return;
+
+    if (day.type !== 'workout') {
+        day.type = 'workout';
+    }
+
+    const nextId = `${exercise.id}-${Date.now()}`;
+    day.exercises.push({
+        ...exercise,
+        id: nextId,
+        completed: false,
+        currentSet: 1
+    });
+
+    day.completed = false;
+    saveWorkoutDayTemplate(day, workoutState.selectedDayIndex);
+    renderWorkoutPlanner();
+    saveWorkoutData();
+    showToast({ icon: '💪', name: 'Exercise added', desc: `${exercise.name} was added to ${day.dayLabel}.` });
+}
+
+function removeExerciseFromSelectedDay(exerciseId) {
+    const day = getCurrentWorkoutDay();
+    if (!day) return;
+    day.exercises = day.exercises.filter(ex => ex.id !== exerciseId);
+    day.completed = day.exercises.length > 0 && day.exercises.every(ex => ex.completed);
+    saveWorkoutDayTemplate(day, workoutState.selectedDayIndex);
+    renderWorkoutPlanner();
+    saveWorkoutData();
+}
+
+function exportWorkoutProgram() {
+    const payload = {
+        format: 'bianka-workout-program',
+        version: 1,
+        exportedAt: new Date().toISOString(),
+        currentWeekStart: workoutState.currentWeekStart,
+        weeklyTemplates: getWorkoutWeeklyTemplates(),
+        categories: getWorkoutCategories(),
+        customExercises: JSON.parse(localStorage.getItem('triviaWorkoutCustomExercises') || '[]'),
+        weeks: workoutState.weeks
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `workout-program-${isoDate(new Date())}.json`;
+    link.click();
+    URL.revokeObjectURL(url);
+    showToast({ icon: '📤', name: 'Program exported', desc: 'Your workout plan was downloaded as JSON.' });
+}
+
+function isValidWorkoutImport(payload) {
+    return !!payload
+        && payload.format === 'bianka-workout-program'
+        && Array.isArray(payload.weeks)
+        && payload.weeks.length > 0
+        && payload.weeks.every(week => week
+            && typeof week.weekStart === 'string'
+            && Array.isArray(week.days)
+            && week.days.length === 7
+            && week.days.every(day => day
+                && typeof day.date === 'string'
+                && (day.type === 'rest' || day.type === 'workout')
+                && Array.isArray(day.exercises)));
+}
+
+function importWorkoutProgramFile(file) {
+    const reader = new FileReader();
+    reader.onload = () => {
+        try {
+            const payload = JSON.parse(String(reader.result || ''));
+            if (!isValidWorkoutImport(payload)) throw new Error('This file is not a valid workout program export.');
+            if (!confirm('Import this workout program and replace your current workout schedule?')) return;
+
+            workoutState.weeks = payload.weeks;
+            workoutState.currentWeekStart = payload.currentWeekStart || payload.weeks[0].weekStart;
+            workoutState.selectedDayIndex = (new Date().getDay() + 6) % 7;
+            localStorage.setItem(WORKOUT_WEEKLY_TEMPLATE_KEY, JSON.stringify(payload.weeklyTemplates || {}));
+            localStorage.setItem('triviaWorkoutCategories', JSON.stringify(payload.categories || getWorkoutCategories()));
+            localStorage.setItem('triviaWorkoutCustomExercises', JSON.stringify(payload.customExercises || []));
+            saveWorkoutData();
+            hydrateWorkoutCategoriesSelect();
+            renderWorkoutPlanner();
+            showToast({ icon: '📥', name: 'Program imported', desc: 'Your workout plan is ready.' });
+        } catch (error) {
+            alert(`Could not import workout program: ${error.message}`);
+        }
+    };
+    reader.readAsText(file);
+}
+
+function renderWorkoutDays() {
+    const week = getWorkoutWeekForCurrentView();
+    const container = document.getElementById('workout-days-row');
+    if (!container) return;
+
+    const today = isoDate(new Date());
+    container.innerHTML = '';
+    week.days.forEach((day, index) => {
+        const missed = day.type === 'workout' && day.date < today && !day.completed;
+        const btn = document.createElement('button');
+        btn.className = `workout-day-pill ${index === workoutState.selectedDayIndex ? 'active' : ''} ${day.completed ? 'completed' : ''} ${day.type === 'rest' ? 'rest-day' : ''} ${missed ? 'missed-day' : ''}`;
+        btn.type = 'button';
+        btn.innerHTML = `
+            <span class="day-letter">${day.dayLabel}</span>
+            <span class="day-number">${parseWorkoutDate(day.date).getDate()}</span>
+            <span class="day-status">${day.type === 'rest' ? 'Rest' : missed ? '✕' : day.exercises.filter(ex => ex.completed).length + '/' + day.exercises.length || '0/0'}</span>
+        `;
+        btn.addEventListener('click', () => setSelectedWorkoutDay(index));
+        container.appendChild(btn);
+    });
+}
+
+function renderWorkoutMetrics() {
+    const baseline = getWorkoutMetricBaseline();
+    const totalWorkouts = baseline.workouts + workoutState.weeks.reduce((total, week) => total + week.days.filter(day => day.type === 'workout').length, 0);
+    const totalSets = baseline.sets + workoutState.weeks.reduce((total, week) => total + week.days.reduce((sum, day) => sum + (day.exercises || []).reduce((s, ex) => s + Number(ex.sets || 0), 0), 0), 0);
+    const totalReps = baseline.reps + workoutState.weeks.reduce((total, week) => total + week.days.reduce((sum, day) => sum + (day.exercises || []).reduce((s, ex) => s + Number(ex.reps || 0) * Number(ex.sets || 0), 0), 0), 0);
+    const streak = calculateWorkoutStreak();
+
+    document.getElementById('workout-streak-count').textContent = String(streak);
+    document.getElementById('workout-total-days').textContent = String(totalWorkouts);
+    document.getElementById('workout-total-sets').textContent = String(totalSets);
+    document.getElementById('workout-total-reps').textContent = String(totalReps);
+}
+
+function getWorkoutMetricBaseline() {
+    try {
+        const baseline = JSON.parse(localStorage.getItem('triviaWorkoutMetricBaseline') || '{}');
+        return {
+            workouts: Number(baseline.workouts || 0),
+            sets: Number(baseline.sets || 0),
+            reps: Number(baseline.reps || 0),
+            streak: Number(baseline.streak || 0),
+            throughDate: baseline.throughDate || '0000-00-00'
+        };
+    } catch (error) {
+        return { workouts: 0, sets: 0, reps: 0, streak: 0, throughDate: '0000-00-00' };
+    }
+}
+
+function snapshotWorkoutMetricBaseline() {
+    const previous = getWorkoutMetricBaseline();
+    const workouts = workoutState.weeks.reduce((total, week) => total + week.days.filter(day => day.type === 'workout').length, 0);
+    const sets = workoutState.weeks.reduce((total, week) => total + week.days.reduce((sum, day) => sum + (day.exercises || []).reduce((subtotal, exercise) => subtotal + Number(exercise.sets || 0), 0), 0), 0);
+    const reps = workoutState.weeks.reduce((total, week) => total + week.days.reduce((sum, day) => sum + (day.exercises || []).reduce((subtotal, exercise) => subtotal + Number(exercise.reps || 0) * Number(exercise.sets || 0), 0), 0), 0);
+    const baseline = {
+        workouts: previous.workouts + workouts,
+        sets: previous.sets + sets,
+        reps: previous.reps + reps,
+        streak: calculateWorkoutStreak(),
+        throughDate: isoDate(new Date())
+    };
+    localStorage.setItem('triviaWorkoutMetricBaseline', JSON.stringify(baseline));
+}
+
+function calculateWorkoutStreak() {
+    const today = isoDate(new Date());
+    const baseline = getWorkoutMetricBaseline();
+    const baselineThroughDate = baseline.throughDate || '0000-00-00';
+    const knownDates = new Set(workoutState.weeks.flatMap(week => (week.days || []).map(day => day.date)));
+    const scheduledDays = Array.from(knownDates)
+        .filter(date => date > baselineThroughDate && date <= today)
+        .map(getWorkoutDayForDate)
+        .filter(day => day && day.type === 'workout')
+        .sort((a, b) => a.date.localeCompare(b.date));
+
+    let streak = baseline.streak;
+    for (const day of scheduledDays) {
+        if (day.completed) {
+            streak += 1;
+        } else if (day.date < today) {
+            streak = 0;
+        }
+    }
+
+    return streak;
+}
+
+function renderWorkoutDayDetail() {
+    const week = getWorkoutWeekForCurrentView();
+    const day = week.days[workoutState.selectedDayIndex] || week.days[0];
+    const wrapper = document.getElementById('workout-day-detail');
+    const title = document.getElementById('workout-day-title');
+    if (!wrapper || !title) return;
+
+    const isToday = day.date === isoDate(new Date());
+    title.textContent = isToday ? "Today's Exercises" : `Exercises for ${day.dayLabel}`;
+    const restToggle = document.getElementById('workout-toggle-rest-btn');
+    if (restToggle) {
+        restToggle.textContent = day.type === 'rest' ? 'Set as Workout Day' : 'Mark as Rest Day';
+        restToggle.onclick = () => setSelectedWorkoutDayType(day.type === 'rest' ? 'workout' : 'rest');
+    }
+
+    if (day.type === 'rest') {
+        wrapper.innerHTML = `
+            <div class="rest-box">
+                <h4>Rest day, take it chill.</h4>
+                <p>Recovery matters. Keep hydration high and let your muscles rebuild.</p>
+            </div>
+        `;
+        return;
+    }
+
+    const completedExercises = day.exercises.filter(ex => ex.completed).length;
+    wrapper.innerHTML = '';
+    day.exercises.forEach((exercise, index) => {
+        const box = document.createElement('div');
+        const isActive = workoutState.activeDayDate === day.date && workoutState.activeExerciseIndex === index && workoutState.timerMode !== 'idle';
+        const isResting = isActive && workoutState.timerMode === 'rest';
+        const isCompleted = exercise.completed;
+        const isSetProgress = Number(exercise.sets || 1) > 1 && !isCompleted;
+        const currentSet = Number(exercise.currentSet || 1);
+        const totalSets = Number(exercise.sets || 1);
+        const nextSetNumber = isCompleted ? totalSets : Math.min(currentSet, totalSets);
+        box.className = `exercise-box ${isCompleted ? 'completed' : ''} ${isResting ? 'resting' : ''}`;
+        box.innerHTML = `
+            <div class="exercise-box-header">
+                <h4>${exercise.name}</h4>
+                <span class="timer-pill">${exercise.duration || 45}s</span>
+            </div>
+            <div class="meta-line">
+                <span>${exercise.category}</span>
+                <span>${exercise.sets} sets</span>
+                <span>${exercise.reps} reps</span>
+                <span>${exercise.weight || 0}kg</span>
+                <span>${exercise.rest || 60}s rest</span>
+            </div>
+            <p style="font-size:0.78rem; color: var(--text-muted); margin:0;">${exercise.description || 'Custom exercise'}</p>
+            <div class="exercise-start-control">
+                <button class="start-btn" data-start-index="${index}" ${isActive || isCompleted ? 'disabled' : ''}>${isResting ? `Rest ${formatCountdownTime(workoutState.timerRemaining)}` : isActive ? `Timer ${workoutState.timerRemaining}s` : isCompleted ? 'Completed ✓' : isSetProgress ? `Start Set ${nextSetNumber}/${totalSets}` : 'Start Exercise'}</button>
+            </div>
+            <div class="exercise-actions">
+                <button class="secondary-btn edit-exercise-btn" data-edit-day-index="${index}" type="button">Edit</button>
+                <button class="secondary-btn remove-exercise-btn" data-remove-id="${exercise.id}">Remove</button>
+            </div>
+        `;
+        box.querySelector('[data-start-index]')?.addEventListener('click', () => startWorkoutExercise(day, index));
+        box.querySelector('[data-edit-day-index]')?.addEventListener('click', () => populateExerciseEditor(exercise, true));
+        box.querySelector('[data-remove-id]').addEventListener('click', () => {
+            removeExerciseFromSelectedDay(exercise.id);
+        });
+        box.addEventListener('click', (event) => {
+            if (event.target.closest('button')) return;
+            populateExerciseEditor(exercise, true);
+        });
+        box.setAttribute('title', 'Click to edit this exercise for this day');
+        wrapper.appendChild(box);
+    });
+
+    if (!day.exercises.length) {
+        wrapper.innerHTML = '<div class="rest-box"><h4>No exercises added yet.</h4><p>Use the exercise builder to add drills for this day.</p></div>';
+    }
+
+    if (completedExercises === day.exercises.length && day.exercises.length > 0) {
+        completeWorkoutDay(day);
+    }
+}
+
+function formatCountdownTime(totalSeconds) {
+    const seconds = Math.max(0, Number(totalSeconds) || 0);
+    const minutes = Math.floor(seconds / 60);
+    const remainder = seconds % 60;
+    return `${String(minutes).padStart(2, '0')}:${String(remainder).padStart(2, '0')}`;
+}
+
+function startWorkoutExercise(day, exerciseIndex) {
+    if (!day || day.type !== 'workout') return;
+    const exercise = day.exercises[exerciseIndex];
+    if (!exercise || exercise.completed) return;
+
+    const setIndex = Number(exercise.currentSet || 1);
+    const totalSets = Number(exercise.sets || 1);
+    if (setIndex > totalSets) {
+        exercise.currentSet = totalSets;
+    }
+    workoutState.activeDayDate = day.date;
+    workoutState.activeExerciseIndex = exerciseIndex;
+    workoutState.timerRemaining = Number(exercise.duration || 45);
+    workoutState.timerMode = 'exercise';
+    stopWorkoutTimer();
+    workoutState.timerInterval = setInterval(() => {
+        if (workoutState.timerRemaining <= 1) {
+            stopWorkoutTimer();
+            if (setIndex >= totalSets) {
+                exercise.completed = true;
+                exercise.currentSet = totalSets;
+                workoutState.timerMode = 'idle';
+                workoutState.activeExerciseIndex = null;
+                workoutState.timerRemaining = 0;
+                showTaskCompleteToast('Exercise complete');
+                renderWorkoutPlanner();
+                saveWorkoutData();
+                completeWorkoutDay(day);
+                updateWorkoutAchievements();
+                return;
+            }
+
+            exercise.currentSet = setIndex + 1;
+            workoutState.timerMode = 'rest';
+            workoutState.timerRemaining = Math.max(1, Number(exercise.rest || 60));
+            showTaskCompleteToast(`Set ${setIndex}/${totalSets} complete`);
+            renderWorkoutPlanner();
+            saveWorkoutData();
+            workoutState.timerInterval = setInterval(() => {
+                if (workoutState.timerRemaining <= 1) {
+                    stopWorkoutTimer();
+                    workoutState.timerMode = 'idle';
+                    workoutState.activeExerciseIndex = null;
+                    workoutState.timerRemaining = 0;
+                    renderWorkoutPlanner();
+                    saveWorkoutData();
+                    return;
+                }
+                workoutState.timerRemaining -= 1;
+                renderWorkoutPlanner();
+            }, 1000);
+            return;
+        }
+        workoutState.timerRemaining -= 1;
+        renderWorkoutPlanner();
+    }, 1000);
+    renderWorkoutPlanner();
+}
+
+function completeWorkoutDay(day) {
+    if (!day || day.type !== 'workout') return;
+    const hasExercises = day.exercises.length > 0;
+    if (!hasExercises) return;
+
+    const wasCompleted = day.completed;
+    day.completed = day.exercises.every(ex => ex.completed);
+    if (day.completed && !wasCompleted) {
+        renderWorkoutDays();
+        saveWorkoutData();
+        showTaskCompleteToast('Workout for the day complete!');
+        updateWorkoutAchievements();
+    }
+}
+
+function stopWorkoutTimer() {
+    if (workoutState.timerInterval) {
+        clearInterval(workoutState.timerInterval);
+        workoutState.timerInterval = null;
+    }
+}
+
+function formatStopwatchTime(totalSeconds) {
+    const seconds = Math.max(0, Math.floor(totalSeconds));
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const remainder = seconds % 60;
+    return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(remainder).padStart(2, '0')}`;
+}
+
+function renderStopwatch() {
+    const display = document.getElementById('workout-stopwatch-display');
+    const startButton = document.getElementById('workout-timer-start-btn');
+    const face = document.getElementById('workout-stopwatch-face');
+    const durationControl = document.getElementById('workout-timer-duration-control');
+    const isCountdown = workoutState.stopwatchMode === 'countdown';
+    if (!display || !startButton || !face) return;
+    const shownSeconds = isCountdown ? workoutState.stopwatchRemaining : workoutState.stopwatchElapsed;
+    const formattedTime = formatStopwatchTime(shownSeconds);
+    display.textContent = formattedTime;
+    const innerWidth = Math.max(80, face.clientWidth - 28);
+    const preferredFontSize = Math.min(56, Math.max(22, window.innerWidth * (isCountdown ? 0.07 : 0.08)));
+    const fittedFontSize = Math.min(preferredFontSize, innerWidth / (formattedTime.length * 0.62));
+    display.style.fontSize = `${Math.max(17, fittedFontSize)}px`;
+    startButton.textContent = workoutState.stopwatchRunning ? 'Pause' : (shownSeconds > 0 && (isCountdown ? shownSeconds < workoutState.stopwatchTotal : shownSeconds > 0) ? 'Resume' : 'Start');
+    document.getElementById('workout-mode-stopwatch-btn')?.classList.toggle('active', !isCountdown);
+    document.getElementById('workout-mode-countdown-btn')?.classList.toggle('active', isCountdown);
+    if (durationControl) durationControl.hidden = !isCountdown;
+    const progress = isCountdown && workoutState.stopwatchTotal > 0
+        ? (workoutState.stopwatchTotal - workoutState.stopwatchRemaining) / workoutState.stopwatchTotal
+        : 0;
+    face.style.setProperty('--timer-progress', `${Math.min(1, Math.max(0, progress)) * 360}deg`);
+    face.classList.toggle('countdown-mode', isCountdown);
+}
+
+function startStopwatch() {
+    if (workoutState.stopwatchRunning) {
+        stopStopwatch();
+        return;
+    }
+    if (workoutState.stopwatchMode === 'countdown' && workoutState.stopwatchRemaining <= 0) {
+        resetStopwatch();
+    }
+    if (workoutState.stopwatchMode === 'countdown' && workoutState.stopwatchRemaining <= 0) {
+        showToast({ icon: '⚠️', name: 'Set a timer duration', desc: 'Enter at least one second to start the countdown.' });
+        return;
+    }
+    workoutState.stopwatchRunning = true;
+    workoutState.stopwatchInterval = setInterval(() => {
+        if (workoutState.stopwatchMode === 'countdown') {
+            workoutState.stopwatchRemaining = Math.max(0, workoutState.stopwatchRemaining - 1);
+            if (workoutState.stopwatchRemaining === 0) {
+                stopStopwatch();
+                showToast({ icon: '⏰', name: 'Timer complete', desc: 'Your countdown has finished.' });
+                return;
+            }
+        } else {
+            workoutState.stopwatchElapsed += 1;
+        }
+        renderStopwatch();
+    }, 1000);
+    renderStopwatch();
+}
+
+function stopStopwatch() {
+    if (workoutState.stopwatchInterval) clearInterval(workoutState.stopwatchInterval);
+    workoutState.stopwatchInterval = null;
+    workoutState.stopwatchRunning = false;
+    renderStopwatch();
+}
+
+function resetStopwatch() {
+    stopStopwatch();
+    workoutState.stopwatchElapsed = 0;
+    const durationMinutes = Number(document.getElementById('workout-timer-duration-input')?.value || 0);
+    const durationSeconds = Number(document.getElementById('workout-timer-duration-seconds')?.value || 0);
+    workoutState.stopwatchTotal = Math.max(1, Math.floor(durationMinutes * 60 + durationSeconds));
+    workoutState.stopwatchRemaining = workoutState.stopwatchTotal;
+    renderStopwatch();
+}
+
+function setWorkoutTimerMode(mode) {
+    if (mode !== 'stopwatch' && mode !== 'countdown') return;
+    stopStopwatch();
+    workoutState.stopwatchMode = mode;
+    workoutState.stopwatchElapsed = 0;
+    const durationMinutes = Number(document.getElementById('workout-timer-duration-input')?.value || 0);
+    const durationSeconds = Number(document.getElementById('workout-timer-duration-seconds')?.value || 0);
+    workoutState.stopwatchTotal = Math.max(1, Math.floor(durationMinutes * 60 + durationSeconds));
+    workoutState.stopwatchRemaining = workoutState.stopwatchTotal;
+    renderStopwatch();
+}
+
+function updateWorkoutAchievements() {
+    const totalCompletedExercises = workoutState.weeks.reduce((total, week) => total + week.days.reduce((sum, day) => sum + ((day.exercises || []).filter(ex => ex.completed).length), 0), 0);
+    const totalWorkoutDays = workoutState.weeks.reduce((total, week) => total + week.days.filter(day => day.type === 'workout' && day.completed).length, 0);
+
+    if (totalWorkoutDays >= 1) unlockAchievement('firstWorkout');
+    if (totalCompletedExercises >= 3) unlockAchievement('workout3');
+    if (totalCompletedExercises >= 5) unlockAchievement('workout5');
+    if (totalCompletedExercises >= 10) unlockAchievement('workout10');
+    if (totalCompletedExercises >= 15) unlockAchievement('workout15');
+    if (totalCompletedExercises >= 30) unlockAchievement('workout30');
+}
+
+function renderWorkoutCalendar() {
+    const calendar = document.getElementById('workout-calendar-grid');
+    if (!calendar) return;
+
+    const viewedWeekDate = parseWorkoutDate(workoutState.currentWeekStart);
+    const firstDayOfMonth = new Date(viewedWeekDate.getFullYear(), viewedWeekDate.getMonth(), 1);
+    const numDays = new Date(firstDayOfMonth.getFullYear(), firstDayOfMonth.getMonth() + 1, 0).getDate();
+    const startOffset = firstDayOfMonth.getDay() === 0 ? 6 : firstDayOfMonth.getDay() - 1;
+
+    calendar.innerHTML = '';
+
+    for (let i = 0; i < startOffset; i++) {
+        const cell = document.createElement('div');
+        cell.className = 'calendar-cell muted';
+        cell.innerHTML = '<span class="calendar-date">·</span>';
+        calendar.appendChild(cell);
+    }
+
+    for (let day = 1; day <= numDays; day++) {
+        const cell = document.createElement('button');
+        const date = new Date(firstDayOfMonth.getFullYear(), firstDayOfMonth.getMonth(), day);
+        const iso = isoDate(date);
+        const matchingDay = getWorkoutDayForDate(iso);
+        const isPast = iso < isoDate(new Date());
+        const isRest = matchingDay?.type === 'rest';
+        const isWorkout = matchingDay?.type === 'workout';
+        const isMissed = isWorkout && isPast && !matchingDay.completed;
+        const isDone = isWorkout && matchingDay.completed;
+        const statusEmoji = isMissed ? '✕' : isRest ? '💤' : isDone ? '✓' : isWorkout ? '💪' : '•';
+        cell.className = `calendar-cell ${isDone ? 'done' : ''} ${isWorkout ? 'workout-day' : ''} ${isRest ? 'rest-day' : ''} ${isMissed ? 'missed' : ''} ${matchingDay && matchingDay.date === getCurrentWorkoutDay().date ? 'active' : ''}`;
+        cell.innerHTML = `<span class="calendar-date">${day}</span><span class="calendar-emoji">${statusEmoji}</span>`;
+        cell.addEventListener('click', () => {
+            const thisWeek = getMonday(date);
+            workoutState.currentWeekStart = isoDate(thisWeek);
+            const week = getWorkoutWeekForCurrentView();
+            const index = week.days.findIndex(dayInfo => dayInfo.date === iso);
+            workoutState.selectedDayIndex = index >= 0 ? index : 0;
+            renderWorkoutPlanner();
+        });
+        calendar.appendChild(cell);
+    }
+}
+
+function renderWorkoutAchievements() {
+    const list = document.getElementById('workout-achievements-list');
+    if (!list) return;
+
+    const keys = Object.keys(workoutAchievementTemplates);
+    list.innerHTML = keys.map(key => {
+        const achievement = achievements[key] || workoutAchievementTemplates[key];
+        const unlocked = !!achievement.unlocked;
+        return `
+            <div class="workout-achievement-card ${unlocked ? 'unlocked' : ''}">
+                <h4>${unlocked ? achievement.name : 'Locked'}</h4>
+                <p>${unlocked ? achievement.desc : 'Complete the milestone to unlock this achievement.'}</p>
+                <div>${achievement.icon}</div>
+            </div>
+        `;
+    }).join('');
+}
+
+function renderWorkoutPlanner() {
+    const week = getWorkoutWeekForCurrentView();
+    const label = document.getElementById('workout-week-label');
+    if (label) {
+        const start = parseWorkoutDate(week.weekStart);
+        const end = new Date(start);
+        end.setDate(start.getDate() + 6);
+        label.textContent = `${start.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} - ${end.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}`;
+    }
+
+    renderWorkoutDays();
+    renderWorkoutMetrics();
+    renderWorkoutDayDetail();
+    renderWorkoutCalendar();
+    renderWorkoutAchievements();
+    addCategoryFilterButtons();
+    renderWorkoutExerciseList();
+    saveWorkoutData();
+}
+
+function syncWorkoutWeekNavigation(direction) {
+    const current = parseWorkoutDate(workoutState.currentWeekStart);
+    current.setDate(current.getDate() + (direction * 7));
+    workoutState.currentWeekStart = isoDate(current);
+    workoutState.selectedDayIndex = 0;
+    renderWorkoutPlanner();
+}
+
+function initializeWorkoutProgram() {
+    ensureWorkoutState();
+    ensureWorkoutWeeklyTemplates();
+    const editor = document.getElementById('workout-exercise-editor');
+    const editorModalContent = document.getElementById('workout-exercise-modal-content');
+    if (editor && editorModalContent && editor.parentElement !== editorModalContent) {
+        editorModalContent.appendChild(editor);
+        editor.classList.add('exercise-editor-in-modal');
+    }
+    Object.keys(workoutAchievementTemplates).forEach(key => {
+        if (!achievements[key]) {
+            achievements[key] = { ...workoutAchievementTemplates[key] };
+        }
+    });
+    addCategoryFilterButtons();
+    renderWorkoutPlanner();
+
+    document.getElementById('workout-prev-week-btn')?.addEventListener('click', () => {
+        syncWorkoutWeekNavigation(-1);
+    });
+
+    document.getElementById('workout-next-week-btn')?.addEventListener('click', () => {
+        syncWorkoutWeekNavigation(1);
+    });
+
+    document.getElementById('workout-new-program-btn')?.addEventListener('click', resetActiveWorkoutProgram);
+    document.getElementById('workout-save-plan-btn')?.addEventListener('click', saveNamedWorkoutPlan);
+    document.getElementById('workout-switch-plan-btn')?.addEventListener('click', switchToSavedWorkoutPlan);
+    document.getElementById('workout-saved-plans-select')?.addEventListener('change', () => {
+        document.getElementById('workout-switch-plan-btn').disabled = !document.getElementById('workout-saved-plans-select').value;
+    });
+    renderSavedWorkoutPlans();
+
+    document.getElementById('workout-timer-open-btn')?.addEventListener('click', () => {
+        document.getElementById('workout-timer-overlay').hidden = false;
+        renderStopwatch();
+    });
+    document.getElementById('workout-timer-close-btn')?.addEventListener('click', () => {
+        document.getElementById('workout-timer-overlay').hidden = true;
+    });
+    document.addEventListener('keydown', event => {
+        if (event.key === 'Escape') {
+            const overlay = document.getElementById('workout-timer-overlay');
+            if (overlay && !overlay.hidden) overlay.hidden = true;
+        }
+    });
+    document.getElementById('workout-timer-overlay')?.addEventListener('click', event => {
+        if (event.target.id === 'workout-timer-overlay') event.currentTarget.hidden = true;
+    });
+    document.getElementById('workout-timer-start-btn')?.addEventListener('click', startStopwatch);
+    document.getElementById('workout-timer-reset-btn')?.addEventListener('click', resetStopwatch);
+    document.getElementById('workout-mode-stopwatch-btn')?.addEventListener('click', () => setWorkoutTimerMode('stopwatch'));
+    document.getElementById('workout-mode-countdown-btn')?.addEventListener('click', () => setWorkoutTimerMode('countdown'));
+    document.getElementById('workout-timer-duration-input')?.addEventListener('change', () => {
+        if (!workoutState.stopwatchRunning && workoutState.stopwatchMode === 'countdown') resetStopwatch();
+    });
+    document.getElementById('workout-timer-duration-seconds')?.addEventListener('change', () => {
+        if (!workoutState.stopwatchRunning && workoutState.stopwatchMode === 'countdown') resetStopwatch();
+    });
+    document.getElementById('workout-reset-all-stats-btn')?.addEventListener('click', () => {
+        document.getElementById('reset-all-progress-btn')?.click();
+    });
+    document.getElementById('workout-export-btn')?.addEventListener('click', exportWorkoutProgram);
+    document.getElementById('workout-import-btn')?.addEventListener('click', () => document.getElementById('workout-import-file')?.click());
+    document.getElementById('workout-import-file')?.addEventListener('change', event => {
+        const file = event.target.files?.[0];
+        if (file) importWorkoutProgramFile(file);
+        event.target.value = '';
+    });
+    renderStopwatch();
+
+    document.getElementById('workout-save-exercise-btn')?.addEventListener('click', saveExerciseFromEditor);
+    document.getElementById('workout-create-exercise-btn')?.addEventListener('click', () => {
+        clearExerciseEditor();
+        openExerciseEditor();
+    });
+    document.getElementById('workout-clear-editor-btn')?.addEventListener('click', closeExerciseEditor);
+    document.getElementById('workout-exercise-modal-close-btn')?.addEventListener('click', closeExerciseEditor);
+    document.getElementById('workout-exercise-modal')?.addEventListener('click', event => {
+        if (event.target.id === 'workout-exercise-modal') closeExerciseEditor();
+    });
+    document.addEventListener('keydown', event => {
+        if (event.key === 'Escape') {
+            const modal = document.getElementById('workout-exercise-modal');
+            if (modal && !modal.hidden) closeExerciseEditor();
+        }
+    });
+    document.getElementById('workout-add-category-btn')?.addEventListener('click', addWorkoutCategory);
+    document.getElementById('workout-new-category-input')?.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') addWorkoutCategory();
+    });
+    hydrateWorkoutCategoriesSelect();
+}
+
+const workoutProgramToggle = document.getElementById('workout-program-btn');
+if (workoutProgramToggle) {
+    workoutProgramToggle.addEventListener('click', () => {
+        showScreen('workout');
+        renderWorkoutPlanner();
+    });
+}
+
+function createQrCodeImageFromText() {
+    const text = prompt('Enter text for the QR code:', 'Workout Plan');
+    if (text === null || text.trim() === '') return;
+
+    const safeText = encodeURIComponent(text.trim());
+    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${safeText}`;
+
+    const container = document.createElement('div');
+    container.style.position = 'fixed';
+    container.style.inset = '0';
+    container.style.background = 'rgba(0,0,0,0.75)';
+    container.style.display = 'flex';
+    container.style.alignItems = 'center';
+    container.style.justifyContent = 'center';
+    container.style.zIndex = '5000';
+
+    const modal = document.createElement('div');
+    modal.style.width = '360px';
+    modal.style.maxWidth = '90vw';
+    modal.style.background = '#111827';
+    modal.style.borderRadius = '18px';
+    modal.style.padding = '20px';
+    modal.style.border = '1px solid rgba(255,255,255,0.12)';
+    modal.style.boxShadow = '0 20px 50px rgba(0,0,0,0.4)';
+
+    const title = document.createElement('h3');
+    title.textContent = 'QR Code Export';
+    title.style.margin = '0 0 12px';
+    title.style.color = '#fff';
+
+    const img = document.createElement('img');
+    img.src = qrUrl;
+    img.alt = 'QR code';
+    img.style.width = '220px';
+    img.style.height = '220px';
+    img.style.display = 'block';
+    img.style.margin = '0 auto 12px';
+    img.style.background = '#fff';
+    img.style.borderRadius = '12px';
+    img.style.padding = '8px';
+
+    const close = document.createElement('button');
+    close.textContent = 'Close';
+    close.style.marginTop = '12px';
+    close.style.width = '100%';
+    close.style.padding = '10px';
+    close.style.borderRadius = '10px';
+    close.style.background = 'linear-gradient(135deg, #00cec9, #6c5ce7)';
+    close.style.color = '#fff';
+    close.style.fontWeight = '700';
+    close.onclick = () => container.remove();
+
+    const download = document.createElement('a');
+    download.href = qrUrl;
+    download.download = 'workout-qr.png';
+    download.target = '_blank';
+    download.style.display = 'inline-block';
+    download.style.width = '100%';
+    download.style.marginTop = '8px';
+    download.style.textAlign = 'center';
+    download.style.padding = '10px';
+    download.style.borderRadius = '10px';
+    download.style.background = 'rgba(255,255,255,0.06)';
+    download.style.color = '#fff';
+    download.style.textDecoration = 'none';
+    download.style.border = '1px solid rgba(255,255,255,0.12)';
+    download.textContent = 'Download PNG';
+
+    modal.appendChild(title);
+    modal.appendChild(img);
+    modal.appendChild(download);
+    modal.appendChild(close);
+    container.appendChild(modal);
+    document.body.appendChild(container);
+
+    img.onerror = () => {
+        alert('QR code service is unavailable right now.');
+        container.remove();
+    };
+}
+
+const devCreateQrBtn = document.getElementById('dev-create-qr-btn');
+if (devCreateQrBtn) {
+    devCreateQrBtn.addEventListener('click', createQrCodeImageFromText);
 }
 
 // QotD Elements & Logic
@@ -1571,6 +3007,7 @@ function updateDaysLeftTracker() {
 // Initial Setup
 document.addEventListener('DOMContentLoaded', () => {
     loadData();
+    initializeWorkoutProgram();
     checkQotdStatus();
     updateDaysLeftTracker();
     // Show welcome initially

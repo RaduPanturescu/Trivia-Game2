@@ -10,8 +10,8 @@
 <body>
     <div id="app">
         <!-- Welcome Screen -->
-        <div id="welcome-screen" class="screen active" style="overflow: hidden;">
-            <div id="otter-container">
+        <div id="welcome-screen" class="screen">
+            <div id="otter-container" aria-hidden="true">
                 <div class="otter o1">🦦📚</div>
                 <div class="otter o2">📖</div>
                 <div class="otter o3">🦦👓</div>
@@ -20,81 +20,201 @@
                 <div class="otter o6">📝</div>
                 <div class="otter o7">🦦🧮</div>
             </div>
-            <div style="display: flex; align-items: center; justify-content: center; gap: 15px; z-index: 2; position: relative;">
-                <h1 class="title" style="margin: 0;">BIANKA<br>TRIVIA NIGHT</h1>
+            <button id="profile-btn" class="welcome-profile-action" type="button" aria-label="Profile" title="Profile">👤</button>
+            <div class="welcome-top-actions">
+                <button id="settings-btn" type="button" aria-label="Settings" title="Settings">⚙️</button>
             </div>
-            <button id="start-btn" class="primary-btn" style="margin-top: 60px; z-index: 2; position: relative;">Start Game</button>
-            <button id="qotd-welcome-btn" class="primary-btn" style="margin-top: 20px; z-index: 2; position: relative; background: linear-gradient(135deg, #0984e3, #00cec9);">
-                Question of the Day
-                <div id="qotd-timer" style="font-size: 0.9rem; font-weight: normal; margin-top: 5px;"></div>
-            </button>
-            <button id="millionaire-welcome-btn" class="primary-btn" style="margin-top: 20px; z-index: 2; position: relative; background: linear-gradient(135deg, #f6d365, #fda085);">
-                Who wants to be a Milllionaire
-            </button>
-            <button id="minesweeper-welcome-btn" class="primary-btn" style="margin-top: 20px; z-index: 2; position: relative; background: linear-gradient(135deg, #a29bfe, #fd79a8);">
-                💣 Minesweeper
-            </button>
-            <button id="sudoku-welcome-btn" class="primary-btn" style="margin-top: 20px; z-index: 2; position: relative; background: linear-gradient(135deg, #00b894, #0984e3);">
-                🔢 Sudoku
-            </button>
-            <div style="position: absolute; bottom: 20px; left: 20px; z-index: 2;">
-                <div style="position: relative; display: inline-block;">
-                    <img src="assets/otter.png" alt="Otter" id="maya-otter" class="floating-otter" style="width: 80px; height: 80px; object-fit: contain; cursor: pointer;">
+            <h1 class="title welcome-title">BIANKA <span>TRIVIA NIGHT</span></h1>
+            <div class="welcome-actions">
+                <button id="start-btn" class="primary-btn" type="button">🎯 Start Game</button>
+                <button id="qotd-welcome-btn" class="primary-btn qotd-welcome-btn" type="button">
+                    <span>❓ Question of the Day</span><span id="qotd-timer">Available Now!</span>
+                </button>
+                <button id="millionaire-welcome-btn" class="primary-btn millionaire-welcome-btn" type="button">💰 Who wants to be a Millionaire</button>
+                <button id="minesweeper-welcome-btn" class="primary-btn minesweeper-welcome-btn" type="button">💣 Minesweeper</button>
+                <button id="sudoku-welcome-btn" class="primary-btn sudoku-welcome-btn" type="button">🔢 Sudoku</button>
+                <button id="workout-program-btn" class="primary-btn workout-btn" type="button">💪 Workout Program</button>
+            </div>
+            <div class="welcome-footer">
+                <img id="maya-otter" class="maya-otter" src="assets/otter.png" alt="Maya the otter — click for a surprise" title="Click Maya!" />
+                <div class="welcome-footer-stats">
+                    <div id="days-left-tracker" class="welcome-stat days-left-stat" title="Countdown">
+                        <span class="welcome-stat-icon">📅</span>
+                        <span><strong id="days-left-count">0</strong><small>days left</small></span>
+                    </div>
+                    <div class="welcome-stat score-stat" aria-label="Points earned">
+                        <span class="welcome-stat-icon">⭐</span>
+                        <strong id="total-points">0</strong>
+                    </div>
+                    <div id="maya-click-counter" class="welcome-stat maya-click-stat" title="Maya clicks">
+                        <span class="welcome-stat-icon">🐾</span>
+                        <strong id="maya-click-count">0</strong>
+                        <small>clicks</small>
+                    </div>
                 </div>
             </div>
-            <div style="position: absolute; bottom: 18px; right: 18px; z-index: 2; display: flex; flex-direction: column; align-items: flex-end; gap: 8px;">
-                <div id="days-left-tracker" style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.06); padding: 8px 10px; border-radius: 12px; font-weight: 700; font-size: 0.9rem; display: flex; align-items: center; gap: 8px; backdrop-filter: blur(10px); box-shadow: 0 4px 15px rgba(0,0,0,0.2); transition: all 0.3s ease;">
-                    <span style="font-size:1rem;">📅</span>
-                    <span style="color: var(--secondary);"><span id="days-left-count">0</span> days left</span>
-                </div>
-                <div id="maya-click-counter" style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.06); padding: 8px 10px; border-radius: 12px; font-weight: 700; font-size: 0.9rem; display: flex; align-items: center; gap: 8px; backdrop-filter: blur(10px); box-shadow: 0 4px 15px rgba(0,0,0,0.2); transition: all 0.3s ease;">
-                    <span style="font-size:1rem;">🐾</span>
-                    <span id="maya-click-count">0</span>
-                </div>
-            </div>
-            <button id="settings-btn" style="position: absolute; top: 20px; right: 20px; background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 50%; width: 45px; height: 45px; font-size: 1.5rem; display: flex; align-items: center; justify-content: center; z-index: 2;">⚙️</button>
-            <button id="profile-btn" style="position: absolute; top: 20px; left: 20px; background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 50%; width: 45px; height: 45px; font-size: 1.5rem; display: flex; align-items: center; justify-content: center; z-index: 2;">👤</button>
         </div>
 
-        <!-- Main Menu Screen -->
+        <!-- Menu Screen -->
         <div id="menu-screen" class="screen">
-            <button class="back-btn" id="back-to-welcome-from-menu">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-            </button>
-            <button id="profile-btn-menu" style="position: absolute; top: 20px; right: 20px; background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 50%; width: 45px; height: 45px; font-size: 1.5rem; display: flex; align-items: center; justify-content: center; z-index: 2;">👤</button>
-
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 60px; margin-bottom: 10px;">
-                <h1 class="title" style="margin-top: 0; font-size: 2rem;">CATEGORIES</h1>
-                <div style="background: var(--glass-bg); padding: 10px 15px; border-radius: 20px; font-weight: bold; border: 1px solid var(--primary); font-size: 1.2rem;">⭐ <span id="total-points">0</span></div>
-            </div>
-            <p class="subtitle">Select a Category to Start</p>
+            <button id="back-to-welcome-from-menu" class="back-btn" type="button">←</button>
+            <h2 class="screen-title">Choose a Category</h2>
             <div class="category-grid">
-                <button class="category-btn" data-category="eu">
-                    <span class="icon">🇪🇺</span>
-                    <span class="label">European Union</span>
-                </button>
-                <button class="category-btn" data-category="hungary">
-                    <span class="icon">🇭🇺</span>
-                    <span class="label">Hungarian Politics</span>
-                </button>
-                <button class="category-btn" data-category="romania">
-                    <span class="icon">🇷🇴</span>
-                    <span class="label">Romanian Politics</span>
-                </button>
-                <button class="category-btn" data-category="trains">
-                    <span class="icon">🚆</span>
-                    <span class="label">Trains</span>
-                </button>
-                <button class="category-btn" data-category="personal">
-                    <span class="icon">❤️</span>
-                    <span class="label">Radu Questions</span>
-                </button>
-                <button class="category-btn locked" id="mystery-btn" disabled>
-                    <span class="icon">🔒</span>
-                    <span class="label">Mystery (Need 5 ⭐)</span>
-                </button>
+                <button class="category-btn" data-category="eu"><span class="icon">🌍</span><span class="label">Europe</span></button>
+                <button class="category-btn" data-category="hungary"><span class="icon">🇭🇺</span><span class="label">Hungary</span></button>
+                <button class="category-btn" data-category="romania"><span class="icon">🇷🇴</span><span class="label">Romania</span></button>
+                <button class="category-btn" data-category="trains"><span class="icon">🚂</span><span class="label">Trains</span></button>
+                <button class="category-btn" data-category="personal"><span class="icon">👤</span><span class="label">Personal Questions</span></button>
+                <button class="category-btn locked" id="mystery-btn" disabled><span class="icon">🔒</span><span class="label">Mystery (Need 5 ⭐)</span></button>
+            </div>
+            <button id="profile-btn-menu" aria-label="Profile">👤</button>
+        </div>
+
+        <!-- Workout Program Screen -->
+        <div id="workout-screen" class="screen">
+            <button class="back-btn" id="back-to-menu-from-workout" type="button" aria-label="Back to menu">←</button>
+            <div class="workout-shell">
+                <div class="workout-header-row">
+                    <div>
+                        <h2 class="screen-title workout-title">Workout Program</h2>
+                        <p class="subtitle workout-subtitle">Build your plan, track your streak, and crush your week.</p>
+                    </div>
+                    <div class="workout-header-actions">
+                        <button id="workout-new-program-btn" class="mini-btn" type="button">New Program</button>
+                        <button id="workout-timer-open-btn" class="mini-btn" type="button" aria-label="Open stopwatch">⏱️ Timer</button>
+                    </div>
+                </div>
+                <div class="workout-week-nav">
+                    <button id="workout-prev-week-btn" class="chip-btn" type="button">← Prev</button>
+                    <div id="workout-week-label" class="week-label"></div>
+                    <button id="workout-next-week-btn" class="chip-btn" type="button">Next →</button>
+                </div>
+                <div id="workout-days-row" class="workout-days-row"></div>
+                <section class="workout-panel personal-stats-panel">
+                    <div class="panel-header"><h3>Personal Stats</h3></div>
+                    <div class="workout-metrics">
+                        <div class="metric-card"><span>🔥 Streak</span><strong id="workout-streak-count">0</strong></div>
+                        <div class="metric-card"><span>💪 Workouts</span><strong id="workout-total-days">0</strong></div>
+                        <div class="metric-card"><span>Sets</span><strong id="workout-total-sets">0</strong></div>
+                        <div class="metric-card"><span>Reps</span><strong id="workout-total-reps">0</strong></div>
+                    </div>
+                </section>
+                <div class="workout-main-grid">
+                    <section class="workout-panel today-exercises-panel">
+                        <div class="panel-header">
+                            <h3 id="workout-day-title">Today's Exercises</h3>
+                            <button id="workout-toggle-rest-btn" class="mini-btn" type="button">Mark as Rest Day</button>
+                        </div>
+                        <div id="workout-day-detail" class="workout-day-detail"></div>
+                    </section>
+                    <details class="workout-panel program-builder-panel collapsible-panel">
+                        <summary class="panel-header"><h3>Program Builder</h3><span class="collapse-indicator" aria-hidden="true">⌄</span></summary>
+                        <div class="collapsible-content">
+                        <div id="workout-category-filters" class="filter-row"></div>
+                        <div id="workout-exercise-list" class="workout-exercise-list"></div>
+                        <button id="workout-create-exercise-btn" class="primary-btn small-btn create-exercise-btn" type="button">＋ Create a New Exercise</button>
+                        <div id="workout-exercise-editor" class="exercise-editor" hidden>
+                            <div class="category-create-row">
+                                <div class="editor-field">
+                                    <label for="workout-exercise-category">Category</label>
+                                    <select id="workout-exercise-category" aria-label="Exercise category"></select>
+                                    <small>Choose the group this exercise belongs to.</small>
+                                </div>
+                                <div class="editor-field category-create-field">
+                                    <label for="workout-new-category-input">Create a category</label>
+                                    <div class="category-input-control"><input id="workout-new-category-input" type="text" placeholder="e.g. Mobility" /><button id="workout-add-category-btn" class="mini-btn" type="button">Add</button></div>
+                                    <small>Add a category if none of the existing ones fit.</small>
+                                </div>
+                            </div>
+                            <div class="editor-grid">
+                                <div class="editor-field"><label for="workout-exercise-name">Exercise name</label><input id="workout-exercise-name" type="text" placeholder="e.g. Goblet squat" required /><small>Use a short, recognizable name.</small></div>
+                                <div class="editor-field"><label for="workout-exercise-description">Description</label><input id="workout-exercise-description" type="text" placeholder="How to perform it or a reminder" /><small>Add form cues or other useful notes.</small></div>
+                                <div class="editor-field"><label for="workout-exercise-sets">Sets</label><input id="workout-exercise-sets" type="number" min="1" max="12" placeholder="e.g. 3" required /><small>How many rounds to complete.</small></div>
+                                <div class="editor-field"><label for="workout-exercise-reps">Reps</label><input id="workout-exercise-reps" type="number" min="1" max="30" placeholder="e.g. 10" required /><small>Repetitions in each set.</small></div>
+                                <div class="editor-field"><label for="workout-exercise-weight">Weight (kg)</label><input id="workout-exercise-weight" type="number" min="0" max="200" placeholder="Optional" /><small>Leave empty for bodyweight exercises.</small></div>
+                                <div class="editor-field"><label for="workout-exercise-duration">Work timer (seconds)</label><input id="workout-exercise-duration" type="number" min="1" max="300" placeholder="e.g. 45" required /><small>Timer duration for each set.</small></div>
+                                <div class="editor-field"><label for="workout-exercise-rest">Rest (seconds)</label><input id="workout-exercise-rest" type="number" min="1" max="180" placeholder="e.g. 60" required /><small>Rest guidance between sets.</small></div>
+                            </div>
+                            <div class="exercise-editor-actions"><button id="workout-save-exercise-btn" class="primary-btn small-btn" type="button">Add Exercise To List</button><button id="workout-clear-editor-btn" class="secondary-btn" type="button">Cancel</button></div>
+                        </div>
+                        </div>
+                    </details>
+                </div>
+                <details class="workout-panel collapsible-panel calendar-panel">
+                    <summary class="panel-header"><h3>Monthly Calendar</h3><span class="collapse-indicator" aria-hidden="true">⌄</span></summary>
+                    <div class="collapsible-content"><div id="workout-calendar-grid" class="workout-calendar-grid"></div></div>
+                </details>
+                <details class="workout-panel collapsible-panel achievements-panel">
+                    <summary class="panel-header"><h3>Achievements</h3><span class="collapse-indicator" aria-hidden="true">⌄</span></summary>
+                    <div class="collapsible-content">
+                        <div id="workout-achievements-list" class="workout-achievements-list"></div>
+                        <button id="workout-reset-all-stats-btn" class="workout-reset-all-stats-btn" type="button">Reset All Stats</button>
+                    </div>
+                </details>
+                <section class="workout-panel saved-plans-panel">
+                    <div class="panel-header"><h3>Save or Switch Workout Plan</h3></div>
+                    <div class="saved-plan-controls">
+                        <label class="saved-plan-name-control" for="workout-plan-name-input">
+                            <span>Save current plan as</span>
+                            <input id="workout-plan-name-input" type="text" placeholder="e.g. Strength Plan" />
+                        </label>
+                        <button id="workout-save-plan-btn" class="mini-btn" type="button">Save Plan</button>
+                        <label class="saved-plan-select-control" for="workout-saved-plans-select">
+                            <span>Saved plans</span>
+                            <select id="workout-saved-plans-select"><option value="">Choose a saved plan</option></select>
+                        </label>
+                        <button id="workout-switch-plan-btn" class="mini-btn" type="button" disabled>Switch Plan</button>
+                    </div>
+                </section>
+                <section class="workout-panel workout-plan-transfer-panel" aria-label="Workout plan transfer">
+                    <div class="panel-header"><h3>Share Your Workout Plan</h3></div>
+                    <p>Export your plan as a JSON file, or import a plan someone shared with you.</p>
+                    <div class="workout-plan-transfer-actions">
+                        <button id="workout-export-btn" class="mini-btn" type="button">Export Workout Plan</button>
+                        <button id="workout-import-btn" class="mini-btn" type="button">Import Workout Plan</button>
+                        <input id="workout-import-file" type="file" accept=".json,application/json" hidden />
+                    </div>
+                </section>
+            </div>
+            <div id="workout-exercise-modal" class="workout-timer-overlay exercise-modal-overlay" hidden>
+                <section class="workout-exercise-modal-window" role="dialog" aria-modal="true" aria-labelledby="workout-exercise-modal-title">
+                    <div class="workout-timer-window-header">
+                        <div>
+                            <h3 id="workout-exercise-modal-title">Create a New Exercise</h3>
+                            <p id="workout-exercise-modal-description">Create an exercise for your reusable exercise list.</p>
+                        </div>
+                        <button id="workout-exercise-modal-close-btn" class="timer-close-btn" type="button" aria-label="Close exercise editor">×</button>
+                    </div>
+                    <div id="workout-exercise-modal-content"></div>
+                </section>
+            </div>
+            <div id="workout-timer-overlay" class="workout-timer-overlay" hidden>
+                <section class="workout-timer-window" role="dialog" aria-modal="true" aria-labelledby="workout-timer-title">
+                    <div class="workout-timer-window-header">
+                        <h3 id="workout-timer-title">⏱️ Stopwatch</h3>
+                        <button id="workout-timer-close-btn" class="timer-close-btn" type="button" aria-label="Close stopwatch">×</button>
+                    </div>
+                    <div class="workout-stopwatch-mode-switch" role="group" aria-label="Timer mode">
+                        <button id="workout-mode-stopwatch-btn" class="active" type="button">Stopwatch</button>
+                        <button id="workout-mode-countdown-btn" type="button">Timer</button>
+                    </div>
+                    <label id="workout-timer-duration-control" class="workout-timer-duration-control" hidden>
+                        <span>Countdown duration</span>
+                        <span class="workout-duration-inputs">
+                            <input id="workout-timer-duration-input" type="number" min="0" max="999" value="1" aria-label="Minutes" />
+                            <small>min</small>
+                            <input id="workout-timer-duration-seconds" type="number" min="0" max="59" value="0" aria-label="Seconds" />
+                            <small>sec</small>
+                        </span>
+                    </label>
+                    <div id="workout-stopwatch-face" class="workout-stopwatch-face" style="--timer-progress: 0deg;">
+                        <strong id="workout-stopwatch-display" class="workout-stopwatch-display">00:00</strong>
+                    </div>
+                    <div class="workout-stopwatch-controls">
+                        <button id="workout-timer-start-btn" class="primary-btn small-btn" type="button">Start</button>
+                        <button id="workout-timer-reset-btn" class="secondary-btn" type="button">Reset</button>
+                    </div>
+                </section>
             </div>
         </div>
 
@@ -170,11 +290,13 @@
                         <div style="display: flex; gap: 10px; margin-top: 10px; width: 100%;">
                             <button id="dev-add-key-btn" style="flex: 1; padding: 8px; background: rgba(255,255,255,0.06); border: 1px solid var(--glass-border); border-radius: 8px; font-size: 0.85rem; font-weight: bold;">+ Add Item</button>
                             <button id="dev-reload-ls-btn" style="flex: 1; padding: 8px; background: rgba(255,255,255,0.06); border: 1px solid var(--glass-border); border-radius: 8px; font-size: 0.85rem; font-weight: bold;">🔄 Reload</button>
+                            <button id="dev-create-qr-btn" style="flex: 1; padding: 8px; background: rgba(0,206,201,0.12); border: 1px solid rgba(0,206,201,0.4); border-radius: 8px; font-size: 0.85rem; font-weight: bold;">QR Code</button>
                         </div>
                         <button id="dev-deactivate-btn" style="width: 100%; margin-top: 15px; padding: 10px; border-radius: 10px; background: rgba(231,76,60,0.15); border: 1px solid #e74c3c; color: #ff7675; font-weight: bold; font-size: 0.9rem;">Deactivate Dev Mode</button>
                     </div>
                 </div>
                 <button id="reset-profile-btn" style="width: 100%; margin-top: 20px; padding: 15px 20px; border: none; border-radius: 15px; background: #e74c3c; color: #fff; font-weight: 700; box-shadow: 0 10px 30px rgba(231, 76, 60, 0.3); cursor: pointer; transition: transform 0.2s ease, opacity 0.2s ease;">Reset Profile</button>
+                <button id="reset-all-progress-btn" style="width: 100%; margin-top: 12px; padding: 15px 20px; border: none; border-radius: 15px; background: linear-gradient(135deg, #ff7675, #d63031); color: #fff; font-weight: 700; box-shadow: 0 10px 30px rgba(214, 48, 49, 0.25); cursor: pointer; transition: transform 0.2s ease, opacity 0.2s ease;">Reset All Progress</button>
             </div>
         </div>
 
