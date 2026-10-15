@@ -38,6 +38,13 @@ const screens = {
 let screenTransitionTimeout = null;
 
 const MAIL_STORAGE_KEY = 'triviaMailLetters';
+const BUILT_IN_MAIL_LETTERS = [{
+    id: 'site-letter-2026-08-17',
+    coverImage: './assets/1.png',
+    insideImage: './assets/2.png',
+    date: '2026-08-17',
+    builtIn: true
+}];
 const startBtn = document.getElementById('start-btn');
 const settingsBtn = document.getElementById('settings-btn');
 const backToWelcomeBtn = document.getElementById('back-to-welcome');
@@ -187,11 +194,15 @@ function isDeveloperMode() {
 function getMailLetters() {
     try {
         const raw = localStorage.getItem(MAIL_STORAGE_KEY);
-        if (!raw) return [];
+        if (!raw) return [...BUILT_IN_MAIL_LETTERS];
         const parsed = JSON.parse(raw);
-        return Array.isArray(parsed) ? parsed : [];
+        const savedLetters = Array.isArray(parsed) ? parsed : [];
+        return [
+            ...BUILT_IN_MAIL_LETTERS,
+            ...savedLetters.filter((letter) => letter.id !== BUILT_IN_MAIL_LETTERS[0].id)
+        ];
     } catch (error) {
-        return [];
+        return [...BUILT_IN_MAIL_LETTERS];
     }
 }
 
@@ -231,7 +242,7 @@ function renderMailList() {
     mailList.innerHTML = letters.map((letter, index) => `
         <div class="mail-letter-card" data-index="${index}">
             <button class="mail-letter-open-tab" type="button" aria-label="Open letter in a big view" data-open-index="${index}">🔎</button>
-            <button class="mail-letter-delete" type="button" aria-label="Delete letter" data-delete-index="${index}">✕</button>
+            ${letter.builtIn ? '' : `<button class="mail-letter-delete" type="button" aria-label="Delete letter" data-delete-index="${index}">✕</button>`}
             <button class="mail-letter-button" type="button" aria-label="Open letter from ${formatMailDate(letter.date)}">
                 <div class="mail-letter-inner">
                     <div class="mail-letter-face mail-letter-front">
@@ -282,7 +293,9 @@ function renderMailList() {
 
 function formatMailDate(dateString) {
     if (!dateString) return 'No date';
-    const date = new Date(dateString);
+    const date = /^\d{4}-\d{2}-\d{2}$/.test(dateString)
+        ? new Date(`${dateString}T12:00:00`)
+        : new Date(dateString);
     if (Number.isNaN(date.getTime())) return dateString;
     return new Intl.DateTimeFormat('en-US', {
         month: 'short',
