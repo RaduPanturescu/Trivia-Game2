@@ -37,9 +37,28 @@ const screens = {
 };
 let screenTransitionTimeout = null;
 
+const MAIL_STORAGE_KEY = 'triviaMailLetters';
 const startBtn = document.getElementById('start-btn');
 const settingsBtn = document.getElementById('settings-btn');
 const backToWelcomeBtn = document.getElementById('back-to-welcome');
+const mailBtn = document.getElementById('mail-btn');
+const mailCountBadge = document.getElementById('mail-count-badge');
+const mailOverlay = document.getElementById('mail-overlay');
+const mailCloseBtn = document.getElementById('mail-close-btn');
+const mailPreviewOverlay = document.getElementById('mail-preview-overlay');
+const mailPreviewBackBtn = document.getElementById('mail-preview-back-btn');
+const mailPreviewImage = document.getElementById('mail-preview-image');
+const mailPreviewDate = document.getElementById('mail-preview-date');
+const mailList = document.getElementById('mail-list');
+const mailEmptyState = document.getElementById('mail-empty-state');
+const mailComposeBtn = document.getElementById('mail-compose-btn');
+const mailComposeOverlay = document.getElementById('mail-compose-overlay');
+const mailComposeCloseBtn = document.getElementById('mail-compose-close-btn');
+const mailCoverInput = document.getElementById('mail-cover-input');
+const mailInsideInput = document.getElementById('mail-inside-input');
+const mailDateInput = document.getElementById('mail-date-input');
+const mailSubmitBtn = document.getElementById('mail-submit-btn');
+let mailPreviewReturnFocus = null;
 const mysteryBtn = document.getElementById('mystery-btn');
 const categoryBtns = document.querySelectorAll('.category-btn:not(#mystery-btn)');
 const difficultyBtns = document.querySelectorAll('.diff-btn');
@@ -158,6 +177,227 @@ function setVolumeRowVisible(row, visible) {
         row.style.maxHeight = '0';
         row.style.opacity = '0';
         row.style.pointerEvents = 'none';
+    }
+}
+
+function isDeveloperMode() {
+    return localStorage.getItem('devMode') === 'true';
+}
+
+function getMailLetters() {
+    try {
+        const raw = localStorage.getItem(MAIL_STORAGE_KEY);
+        if (!raw) return [];
+        const parsed = JSON.parse(raw);
+        return Array.isArray(parsed) ? parsed : [];
+    } catch (error) {
+        return [];
+    }
+}
+
+function persistMailLetters(nextLetters) {
+    localStorage.setItem(MAIL_STORAGE_KEY, JSON.stringify(nextLetters));
+    window.dispatchEvent(new CustomEvent('mail-state-updated', { detail: nextLetters }));
+    if (typeof window !== 'undefined') {
+        window.dispatchEvent(new StorageEvent('storage', {
+            key: MAIL_STORAGE_KEY,
+            newValue: JSON.stringify(nextLetters)
+        }));
+    }
+}
+
+function renderMailBadge() {
+    const letters = getMailLetters();
+    if (mailCountBadge) {
+        mailCountBadge.textContent = String(letters.length);
+        mailCountBadge.style.display = letters.length > 0 ? 'grid' : 'none';
+    }
+    if (mailComposeBtn) {
+        mailComposeBtn.classList.toggle('visible', isDeveloperMode());
+    }
+}
+
+function renderMailList() {
+    const letters = getMailLetters();
+    if (!mailList || !mailEmptyState) return;
+
+    if (letters.length === 0) {
+        mailList.innerHTML = '';
+        mailEmptyState.classList.remove('hidden');
+        return;
+    }
+
+    mailEmptyState.classList.add('hidden');
+    mailList.innerHTML = letters.map((letter, index) => `
+        <div class="mail-letter-card" data-index="${index}">
+            <button class="mail-letter-open-tab" type="button" aria-label="Open letter in a big view" data-open-index="${index}">🔎</button>
+            <button class="mail-letter-delete" type="button" aria-label="Delete letter" data-delete-index="${index}">✕</button>
+            <button class="mail-letter-button" type="button" aria-label="Open letter from ${formatMailDate(letter.date)}">
+                <div class="mail-letter-inner">
+                    <div class="mail-letter-face mail-letter-front">
+                        <img src="${letter.coverImage || ''}" alt="Letter cover" />
+                    </div>
+                    <div class="mail-letter-face mail-letter-back">
+                        <img src="${letter.insideImage || ''}" alt="Letter contents" />
+                        <div class="mail-letter-inside-overlay"></div>
+                        <div class="mail-letter-date">
+                            <span>Issue date</span>
+                            <strong>${formatMailDate(letter.date)}</strong>
+                        </div>
+                    </div>
+                </div>
+            </button>
+        </div>
+    `).join('');
+
+    mailList.querySelectorAll('.mail-letter-open-tab').forEach((button) => {
+        button.addEventListener('click', (event) => {
+            event.stopPropagation();
+            const index = Number(button.dataset.openIndex);
+            const letter = getMailLetters()[index];
+            if (!letter || !letter.insideImage) return;
+            openMailPreview(letter, button);
+        });
+    });
+
+    mailList.querySelectorAll('.mail-letter-delete').forEach((button) => {
+        button.addEventListener('click', (event) => {
+            event.stopPropagation();
+            const index = Number(button.dataset.deleteIndex);
+            const nextLetters = getMailLetters().filter((_, i) => i !== index);
+            persistMailLetters(nextLetters);
+            renderMailBadge();
+            renderMailList();
+        });
+    });
+
+    mailList.querySelectorAll('.mail-letter-button').forEach((button) => {
+        button.addEventListener('click', () => {
+            const card = button.closest('.mail-letter-card');
+            if (!card) return;
+            card.classList.toggle('is-flipped');
+        });
+    });
+}
+
+function formatMailDate(dateString) {
+    if (!dateString) return 'No date';
+    const date = new Date(dateString);
+    if (Number.isNaN(date.getTime())) return dateString;
+    return new Intl.DateTimeFormat('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric'
+    }).format(date);
+}
+
+function openMailOverlay() {
+    renderMailBadge();
+    renderMailList();
+    if (mailOverlay) {
+        mailOverlay.classList.remove('hidden');
+        mailOverlay.setAttribute('aria-hidden', 'false');
+    }
+}
+
+function closeMailOverlay() {
+    if (mailOverlay) {
+        mailOverlay.classList.add('hidden');
+        mailOverlay.setAttribute('aria-hidden', 'true');
+    }
+}
+
+function openMailPreview(letter, returnFocus) {
+    if (!mailPreviewOverlay || !mailPreviewImage) return;
+    mailPreviewReturnFocus = returnFocus;
+    mailPreviewImage.src = letter.insideImage;
+    if (mailPreviewDate) {
+        mailPreviewDate.textContent = `Issue date: ${formatMailDate(letter.date)}`;
+    }
+    mailPreviewOverlay.classList.remove('hidden');
+    mailPreviewOverlay.setAttribute('aria-hidden', 'false');
+    if (mailPreviewBackBtn) mailPreviewBackBtn.focus();
+}
+
+function closeMailPreview() {
+    if (!mailPreviewOverlay) return;
+    mailPreviewOverlay.classList.add('hidden');
+    mailPreviewOverlay.setAttribute('aria-hidden', 'true');
+    if (mailPreviewImage) mailPreviewImage.removeAttribute('src');
+    if (mailPreviewReturnFocus && document.contains(mailPreviewReturnFocus)) {
+        mailPreviewReturnFocus.focus();
+    }
+    mailPreviewReturnFocus = null;
+}
+
+function openMailComposeOverlay() {
+    if (mailComposeOverlay) {
+        mailComposeOverlay.classList.remove('hidden');
+        mailComposeOverlay.setAttribute('aria-hidden', 'false');
+    }
+}
+
+function closeMailComposeOverlay() {
+    if (mailComposeOverlay) {
+        mailComposeOverlay.classList.add('hidden');
+        mailComposeOverlay.setAttribute('aria-hidden', 'true');
+    }
+    if (mailCoverInput) mailCoverInput.value = '';
+    if (mailInsideInput) mailInsideInput.value = '';
+    if (mailDateInput) mailDateInput.value = '';
+}
+
+async function readFileAsDataUrl(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (event) => resolve(event.target.result);
+        reader.onerror = () => reject(new Error('Unable to read selected file.'));
+        reader.readAsDataURL(file);
+    });
+}
+
+async function handleMailSubmit() {
+    if (!mailCoverInput || !mailInsideInput || !mailDateInput) return;
+
+    const coverFile = mailCoverInput.files && mailCoverInput.files[0];
+    const insideFile = mailInsideInput.files && mailInsideInput.files[0];
+    const issueDate = mailDateInput.value;
+
+    if (!coverFile || !insideFile || !issueDate) {
+        alert('Please upload both images and add the issue date.');
+        return;
+    }
+
+    if (!isDeveloperMode()) {
+        alert('Only developer mode can add a letter.');
+        return;
+    }
+
+    const letters = getMailLetters();
+    if (letters.length >= 1) {
+        alert('Developer mode can only add one letter at a time.');
+        return;
+    }
+
+    try {
+        const coverImage = await readFileAsDataUrl(coverFile);
+        const insideImage = await readFileAsDataUrl(insideFile);
+        const nextLetters = [
+            ...letters,
+            {
+                id: Date.now().toString(36),
+                coverImage,
+                insideImage,
+                date: issueDate
+            }
+        ];
+
+        persistMailLetters(nextLetters);
+        renderMailBadge();
+        renderMailList();
+        closeMailComposeOverlay();
+    } catch (error) {
+        alert('There was a problem adding the letter.');
     }
 }
 
@@ -3010,6 +3250,59 @@ document.addEventListener('DOMContentLoaded', () => {
     initializeWorkoutProgram();
     checkQotdStatus();
     updateDaysLeftTracker();
+    renderMailBadge();
+    renderMailList();
+
+    if (mailBtn) {
+        mailBtn.addEventListener('click', () => {
+            openMailOverlay();
+        });
+    }
+
+    if (mailCloseBtn) {
+        mailCloseBtn.addEventListener('click', closeMailOverlay);
+    }
+
+    if (mailPreviewBackBtn) {
+        mailPreviewBackBtn.addEventListener('click', closeMailPreview);
+    }
+
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && mailPreviewOverlay && !mailPreviewOverlay.classList.contains('hidden')) {
+            closeMailPreview();
+        }
+    });
+
+    if (mailComposeBtn) {
+        mailComposeBtn.addEventListener('click', () => {
+            if (isDeveloperMode()) {
+                openMailComposeOverlay();
+            } else {
+                alert('Only developer mode can add a letter.');
+            }
+        });
+    }
+
+    if (mailComposeCloseBtn) {
+        mailComposeCloseBtn.addEventListener('click', closeMailComposeOverlay);
+    }
+
+    if (mailSubmitBtn) {
+        mailSubmitBtn.addEventListener('click', handleMailSubmit);
+    }
+
+    window.addEventListener('mail-state-updated', () => {
+        renderMailBadge();
+        renderMailList();
+    });
+
+    window.addEventListener('storage', (event) => {
+        if (event.key === MAIL_STORAGE_KEY) {
+            renderMailBadge();
+            renderMailList();
+        }
+    });
+
     // Show welcome initially
     showScreen('welcome');
     // Initialize maya click counter display

@@ -22,6 +22,10 @@
             </div>
             <button id="profile-btn" class="welcome-profile-action" type="button" aria-label="Profile" title="Profile">👤</button>
             <div class="welcome-top-actions">
+                <button id="mail-btn" class="mail-btn" type="button" aria-label="Mailbox" title="Mailbox">
+                    <span class="mail-icon">✉️</span>
+                    <span id="mail-count-badge" class="mail-count-badge">0</span>
+                </button>
                 <button id="settings-btn" type="button" aria-label="Settings" title="Settings">⚙️</button>
             </div>
             <h1 class="title welcome-title">BIANKA <span>TRIVIA NIGHT</span></h1>
@@ -52,6 +56,45 @@
                         <small>clicks</small>
                     </div>
                 </div>
+            </div>
+        </div>
+
+        <div id="mail-overlay" class="mail-overlay hidden" aria-hidden="true">
+            <div class="mail-modal" role="dialog" aria-modal="true" aria-labelledby="mail-modal-title">
+                <div class="mail-header">
+                    <h2 id="mail-modal-title">Mailbox</h2>
+                    <button id="mail-close-btn" class="mail-close-btn" type="button" aria-label="Close mailbox">×</button>
+                </div>
+                <button id="mail-compose-btn" class="primary-btn mail-compose-btn" type="button">Send Mail</button>
+                <div id="mail-empty-state" class="mail-empty-state">
+                    <div class="mail-empty-icon">📭</div>
+                    <p>No letters yet.</p>
+                </div>
+                <div id="mail-list" class="mail-list"></div>
+            </div>
+        </div>
+
+        <div id="mail-compose-overlay" class="mail-compose-overlay hidden" aria-hidden="true">
+            <div class="mail-compose-panel" role="dialog" aria-modal="true" aria-labelledby="mail-compose-title">
+                <div class="mail-header">
+                    <h2 id="mail-compose-title">Send a Letter</h2>
+                    <button id="mail-compose-close-btn" class="mail-close-btn" type="button" aria-label="Close compose form">×</button>
+                </div>
+                <div class="mail-form-grid">
+                    <label class="mail-field">
+                        <span>Cover image</span>
+                        <input id="mail-cover-input" type="file" accept="image/*" />
+                    </label>
+                    <label class="mail-field">
+                        <span>Inside image</span>
+                        <input id="mail-inside-input" type="file" accept="image/*" />
+                    </label>
+                    <label class="mail-field">
+                        <span>Issue date</span>
+                        <input id="mail-date-input" type="date" />
+                    </label>
+                </div>
+                <button id="mail-submit-btn" class="primary-btn" type="button">Add Letter</button>
             </div>
         </div>
 
@@ -550,6 +593,12 @@
                 <button id="sudoku-back-btn" class="primary-btn" style="flex: 1; background: var(--accent);">Back to Menu</button>
             </div>
         </div>
+    </div>
+
+    <div id="mail-preview-overlay" class="mail-preview-overlay hidden" aria-hidden="true">
+        <button id="mail-preview-back-btn" class="mail-preview-back-btn" type="button" aria-label="Back to mailbox">← Back</button>
+        <img id="mail-preview-image" class="mail-preview-image" alt="Letter inside view" />
+        <div id="mail-preview-date" class="mail-preview-date"></div>
     </div>
     
     <!-- Toast Container -->
