@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bianka Trivia Night</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="puzzle.css">
+    <link rel="stylesheet" href="wordle.css">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
 </head>
 <body>
@@ -37,6 +39,8 @@
                 <button id="millionaire-welcome-btn" class="primary-btn millionaire-welcome-btn" type="button">💰 Who wants to be a Millionaire</button>
                 <button id="minesweeper-welcome-btn" class="primary-btn minesweeper-welcome-btn" type="button">💣 Minesweeper</button>
                 <button id="sudoku-welcome-btn" class="primary-btn sudoku-welcome-btn" type="button">🔢 Sudoku</button>
+                <button id="puzzle-welcome-btn" class="primary-btn puzzle-welcome-btn" type="button">🧩 Puzzle</button>
+                <button id="wordle-welcome-btn" class="primary-btn wordle-welcome-btn" type="button">🔤 Wordle</button>
                 <button id="workout-program-btn" class="primary-btn workout-btn" type="button">💪 Workout Program</button>
             </div>
             <div class="welcome-footer">
@@ -55,6 +59,23 @@
                         <strong id="maya-click-count">0</strong>
                         <small>clicks</small>
                     </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Game Hub Screen -->
+        <div id="game-hub-screen" class="screen game-hub-screen">
+            <button id="game-hub-back-btn" class="back-btn" type="button" aria-label="Back to welcome screen">←</button>
+            <div class="game-hub-content">
+                <div class="game-hub-brand">BIANKA <span>GAME NIGHT</span></div>
+                <h2 class="screen-title">Choose Your Game</h2>
+                <div class="game-hub-grid">
+                    <button id="hub-category-btn" class="game-hub-card hub-trivia-card" type="button"><span class="game-hub-icon">🎯</span><strong>Category Trivia</strong></button>
+                    <button id="hub-millionaire-btn" class="game-hub-card hub-millionaire-card" type="button"><span class="game-hub-icon">💰</span><strong>WHTBAM</strong></button>
+                    <button id="hub-minesweeper-btn" class="game-hub-card hub-minesweeper-card" type="button"><span class="game-hub-icon">💣</span><strong>Minesweeper</strong></button>
+                    <button id="hub-sudoku-btn" class="game-hub-card hub-sudoku-card" type="button"><span class="game-hub-icon">🔢</span><strong>Sudoku</strong></button>
+                    <button id="hub-puzzle-btn" class="game-hub-card hub-puzzle-card" type="button"><span class="game-hub-icon">🧩</span><strong>Picture Puzzle</strong></button>
+                    <button id="hub-wordle-btn" class="game-hub-card hub-wordle-card" type="button"><span class="game-hub-icon">🔤</span><strong>Wordle</strong></button>
                 </div>
             </div>
         </div>
@@ -593,12 +614,92 @@
                 <button id="sudoku-back-btn" class="primary-btn" style="flex: 1; background: var(--accent);">Back to Menu</button>
             </div>
         </div>
+
+        <!-- Picture Puzzle Screen -->
+        <div id="puzzle-screen" class="screen puzzle-screen">
+            <button id="puzzle-back-btn" class="back-btn" type="button" aria-label="Back to main menu">←</button>
+            <div class="puzzle-shell">
+                <header class="puzzle-header">
+                    <h2 class="screen-title">Picture Puzzles</h2>
+                </header>
+                <section class="puzzle-daily-panel">
+                    <div>
+                        <h3>🧩 Puzzle of the Day</h3>
+                        <p id="daily-puzzle-message">Loading today's picture…</p>
+                    </div>
+                    <label class="daily-puzzle-difficulty" for="daily-puzzle-difficulty">Difficulty
+                        <select id="daily-puzzle-difficulty"><option value="easy">Easy · 9 pieces</option><option value="medium" selected>Medium · 25 pieces</option><option value="hard">Hard · 49 pieces</option></select>
+                    </label>
+                    <button id="daily-puzzle-play-btn" class="primary-btn" type="button">Play Today's Puzzle</button>
+                </section>
+                <section class="puzzle-create-panel">
+                    <div class="puzzle-section-heading">
+                        <div><h3>Create Your Puzzle</h3></div>
+                    </div>
+                    <div class="puzzle-create-controls">
+                        <label class="puzzle-upload-control" for="puzzle-upload-input">Picture<input id="puzzle-upload-input" type="file" accept="image/*" /></label>
+                        <label for="puzzle-name-input">Puzzle name<input id="puzzle-name-input" type="text" maxlength="60" placeholder="e.g. Summer holiday" /></label>
+                        <label for="puzzle-difficulty-select">Difficulty<select id="puzzle-difficulty-select"><option value="easy">Easy · 9 pieces</option><option value="medium">Medium · 25 pieces</option><option value="hard">Hard · 49 pieces</option></select></label>
+                        <button id="puzzle-save-play-btn" class="primary-btn" type="button">Save &amp; Play</button>
+                    </div>
+                </section>
+                <section class="your-puzzles-panel">
+                    <div class="puzzle-section-heading"><div><h3>Your Puzzles</h3></div></div>
+                    <div id="your-puzzles-list" class="your-puzzles-list"><p class="puzzle-empty-state">No personal puzzles yet. Upload a picture to get started.</p></div>
+                </section>
+                <section id="puzzle-game-panel" class="puzzle-game-panel" hidden>
+                    <div class="puzzle-game-heading">
+                        <div><h3 id="active-puzzle-title">Puzzle</h3><p id="puzzle-piece-count" hidden></p></div>
+                        <button id="puzzle-close-game-btn" class="mini-btn" type="button">Close Puzzle</button>
+                    </div>
+                    <p class="puzzle-instructions">Hold the left mouse button and drag each piece. Release it near its matching outline to snap it into place. Scroll to zoom.</p>
+                    <div id="puzzle-workspace" class="puzzle-workspace">
+                        <div id="puzzle-board-viewport" class="puzzle-board-viewport">
+                            <div id="puzzle-board" class="puzzle-board" aria-label="Puzzle board"></div>
+                        </div>
+                        <div id="puzzle-piece-tray" class="puzzle-piece-tray" aria-label="Scrambled puzzle pieces"></div>
+                    </div>
+                    <p id="puzzle-game-message" class="puzzle-game-message" aria-live="polite"></p>
+                </section>
+            </div>
+        </div>
+        <div id="wordle-screen" class="screen wordle-screen">
+            <button id="wordle-back-btn" class="back-btn" type="button" aria-label="Back to welcome screen">←</button>
+            <div class="wordle-shell">
+                <div class="wordle-heading">
+                    <h2 class="screen-title">Wordle</h2>
+                </div>
+                <div class="wordle-daily-bar">
+                    <span id="wordle-daily-status">One puzzle per day</span>
+                    <span id="wordle-countdown">Next word in 00:00:00</span>
+                </div>
+                <div id="wordle-board" class="wordle-board" role="grid" aria-label="Six guesses of five letters"></div>
+                <div id="wordle-message" class="wordle-message" aria-live="polite">Type a five-letter word and press Enter.</div>
+                <div id="wordle-dev-controls" class="wordle-dev-controls" hidden>
+                    <button id="wordle-reveal-btn" type="button">Reveal Word</button>
+                    <button id="wordle-new-dev-game-btn" type="button">New Dev Puzzle</button>
+                </div>
+                <div id="wordle-keyboard" class="wordle-keyboard" aria-label="On-screen keyboard"></div>
+            </div>
+        </div>
     </div>
 
     <div id="mail-preview-overlay" class="mail-preview-overlay hidden" aria-hidden="true">
         <button id="mail-preview-back-btn" class="mail-preview-back-btn" type="button" aria-label="Back to mailbox">← Back</button>
         <img id="mail-preview-image" class="mail-preview-image" alt="Letter inside view" />
         <div id="mail-preview-date" class="mail-preview-date"></div>
+    </div>
+
+    <div id="dev-stat-edit-overlay" class="dev-stat-edit-overlay hidden" aria-hidden="true">
+        <section class="dev-stat-edit-panel" role="dialog" aria-modal="true" aria-labelledby="dev-stat-edit-title">
+            <h2 id="dev-stat-edit-title">Edit developer value</h2>
+            <label id="dev-stat-edit-label" for="dev-stat-edit-input">Value</label>
+            <input id="dev-stat-edit-input" type="text" autocomplete="off" />
+            <div class="dev-stat-edit-actions">
+                <button id="dev-stat-edit-cancel" type="button">Cancel</button>
+                <button id="dev-stat-edit-save" type="button">Save</button>
+            </div>
+        </section>
     </div>
     
     <!-- Toast Container -->
@@ -656,6 +757,9 @@
     <script src="questions.js?v=2"></script>
     <script src="minesweeper.js?v=2"></script>
     <script src="sudoku.js?v=2"></script>
-    <script src="app.js?v=2"></script>
+    <script src="app.js?v=3"></script>
+    <script src="puzzle.js?v=2"></script>
+    <script src="wordle-words.js?v=3"></script>
+    <script src="wordle.js?v=4"></script>
 </body>
 </html>

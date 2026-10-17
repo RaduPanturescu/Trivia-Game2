@@ -19,6 +19,8 @@ let previousScreen = 'welcome';
 // DOM Elements
 const screens = {
     welcome: document.getElementById('welcome-screen'),
+    gameHub: document.getElementById('game-hub-screen'),
+    wordle: document.getElementById('wordle-screen'),
     menu: document.getElementById('menu-screen'),
     settings: document.getElementById('settings-screen'),
     difficulty: document.getElementById('difficulty-screen'),
@@ -33,7 +35,8 @@ const screens = {
     minesweeperSize: document.getElementById('minesweeper-size-screen'),
     minesweeper: document.getElementById('minesweeper-screen'),
     sudokuSize: document.getElementById('sudoku-size-screen'),
-    sudoku: document.getElementById('sudoku-screen')
+    sudoku: document.getElementById('sudoku-screen'),
+    puzzle: document.getElementById('puzzle-screen')
 };
 let screenTransitionTimeout = null;
 
@@ -448,7 +451,7 @@ function showScreen(screenName) {
         // Toggle app width for larger game screens
         const appEl = document.getElementById('app');
         if (appEl) {
-            const wideScreens = ['minesweeper', 'minesweeperSize', 'sudoku', 'sudokuSize'];
+            const wideScreens = ['minesweeper', 'minesweeperSize', 'sudoku', 'sudokuSize', 'puzzle'];
             if (wideScreens.includes(screenName)) appEl.classList.add('wide');
             else appEl.classList.remove('wide');
         }
@@ -461,8 +464,19 @@ function showScreen(screenName) {
 // Welcome & Settings & Profile
 startBtn.addEventListener('click', () => {
     playPopSound();
+    showScreen('gameHub');
+});
+
+document.getElementById('game-hub-back-btn').addEventListener('click', () => showScreen('welcome'));
+document.getElementById('hub-category-btn').addEventListener('click', () => {
+    playPopSound();
     showScreen('menu');
 });
+document.getElementById('hub-millionaire-btn').addEventListener('click', () => document.getElementById('millionaire-welcome-btn').click());
+document.getElementById('hub-minesweeper-btn').addEventListener('click', () => document.getElementById('minesweeper-welcome-btn').click());
+document.getElementById('hub-sudoku-btn').addEventListener('click', () => document.getElementById('sudoku-welcome-btn').click());
+document.getElementById('hub-puzzle-btn').addEventListener('click', () => document.getElementById('puzzle-welcome-btn').click());
+document.getElementById('hub-wordle-btn').addEventListener('click', () => document.getElementById('wordle-welcome-btn').click());
 settingsBtn.addEventListener('click', () => {
     playPopSound();
     showScreen('settings');
@@ -506,7 +520,7 @@ backToWelcomeFromProfile.addEventListener('click', () => {
 });
 backToWelcomeFromMenu.addEventListener('click', () => {
     playPopSound();
-    showScreen('welcome');
+    showScreen('gameHub');
 });
 
 // Menu -> Difficulty
@@ -2486,13 +2500,10 @@ if (workoutProgramToggle) {
 }
 
 function createQrCodeImageFromText() {
-    const text = prompt('Enter text for the QR code:', 'Workout Plan');
-    if (text === null || text.trim() === '') return;
-
-    const safeText = encodeURIComponent(text.trim());
-    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${safeText}`;
-
     const container = document.createElement('div');
+    container.setAttribute('role', 'dialog');
+    container.setAttribute('aria-modal', 'true');
+    container.setAttribute('aria-label', 'Create a QR code');
     container.style.position = 'fixed';
     container.style.inset = '0';
     container.style.background = 'rgba(0,0,0,0.75)';
@@ -2501,22 +2512,39 @@ function createQrCodeImageFromText() {
     container.style.justifyContent = 'center';
     container.style.zIndex = '5000';
 
-    const modal = document.createElement('div');
-    modal.style.width = '360px';
-    modal.style.maxWidth = '90vw';
-    modal.style.background = '#111827';
-    modal.style.borderRadius = '18px';
-    modal.style.padding = '20px';
-    modal.style.border = '1px solid rgba(255,255,255,0.12)';
-    modal.style.boxShadow = '0 20px 50px rgba(0,0,0,0.4)';
+    const modal = document.createElement('section');
+    Object.assign(modal.style, {
+        width: '360px', maxWidth: '90vw', background: '#111827', borderRadius: '18px',
+        padding: '20px', border: '1px solid rgba(255,255,255,0.12)',
+        boxShadow: '0 20px 50px rgba(0,0,0,0.4)', color: '#fff'
+    });
 
     const title = document.createElement('h3');
-    title.textContent = 'QR Code Export';
+    title.textContent = 'Create QR Code';
     title.style.margin = '0 0 12px';
     title.style.color = '#fff';
 
+    const label = document.createElement('label');
+    label.textContent = 'Text or link';
+    label.style.display = 'block';
+    label.style.marginBottom = '8px';
+    label.style.color = '#b2bec3';
+
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.value = 'Workout Plan';
+    input.placeholder = 'Enter text or a link';
+    input.setAttribute('aria-label', 'Text or link to encode');
+    Object.assign(input.style, {
+        width: '100%', padding: '11px 12px', border: '1px solid rgba(255,255,255,0.18)',
+        borderRadius: '10px', background: '#080b13', color: '#fff', font: 'inherit'
+    });
+
+    const qrResult = document.createElement('div');
+    qrResult.style.marginTop = '14px';
+    qrResult.style.textAlign = 'center';
+
     const img = document.createElement('img');
-    img.src = qrUrl;
     img.alt = 'QR code';
     img.style.width = '220px';
     img.style.height = '220px';
@@ -2537,10 +2565,17 @@ function createQrCodeImageFromText() {
     close.style.fontWeight = '700';
     close.onclick = () => container.remove();
 
+    const generate = document.createElement('button');
+    generate.type = 'button';
+    generate.textContent = 'Generate QR Code';
+    Object.assign(generate.style, {
+        width: '100%', marginTop: '14px', padding: '11px', borderRadius: '10px',
+        background: 'linear-gradient(135deg, #00cec9, #6c5ce7)', color: '#fff', fontWeight: '700'
+    });
+
     const download = document.createElement('a');
-    download.href = qrUrl;
-    download.download = 'workout-qr.png';
-    download.target = '_blank';
+    download.download = 'qr-code.png';
+    download.hidden = true;
     download.style.display = 'inline-block';
     download.style.width = '100%';
     download.style.marginTop = '8px';
@@ -2553,17 +2588,45 @@ function createQrCodeImageFromText() {
     download.style.border = '1px solid rgba(255,255,255,0.12)';
     download.textContent = 'Download PNG';
 
+    function generateQr() {
+        const text = input.value.trim();
+        if (!text) {
+            input.focus();
+            return;
+        }
+        const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(text)}`;
+        img.onload = () => {
+            download.href = qrUrl;
+            download.hidden = false;
+            qrResult.replaceChildren(img, download);
+        };
+        img.onerror = () => {
+            qrResult.textContent = 'QR code service is unavailable. Check your internet connection and try again.';
+            download.hidden = true;
+        };
+        qrResult.textContent = 'Generating…';
+        img.src = qrUrl;
+    }
+
+    generate.addEventListener('click', generateQr);
+    input.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') generateQr();
+        if (event.key === 'Escape') container.remove();
+    });
+    container.addEventListener('click', (event) => {
+        if (event.target === container) container.remove();
+    });
+
     modal.appendChild(title);
-    modal.appendChild(img);
+    label.appendChild(input);
+    modal.appendChild(label);
+    modal.appendChild(generate);
+    modal.appendChild(qrResult);
     modal.appendChild(download);
     modal.appendChild(close);
     container.appendChild(modal);
     document.body.appendChild(container);
-
-    img.onerror = () => {
-        alert('QR code service is unavailable right now.');
-        container.remove();
-    };
+    input.focus();
 }
 
 const devCreateQrBtn = document.getElementById('dev-create-qr-btn');
@@ -3115,6 +3178,8 @@ function updateDevModeUIStyles() {
     if (daysLeftTracker) {
         daysLeftTracker.style.cursor = isDev ? 'pointer' : 'default';
         daysLeftTracker.title = isDev ? 'Click to edit target date (Dev)' : '';
+        daysLeftTracker.style.pointerEvents = 'auto';
+        daysLeftTracker.style.position = 'relative';
         if (isDev) {
             daysLeftTracker.style.border = '1px dashed var(--secondary)';
         } else {
@@ -3125,6 +3190,8 @@ function updateDevModeUIStyles() {
     if (clickCounterEl) {
         clickCounterEl.style.cursor = isDev ? 'pointer' : 'default';
         clickCounterEl.title = isDev ? 'Click to edit click count (Dev)' : '';
+        clickCounterEl.style.pointerEvents = 'auto';
+        clickCounterEl.style.position = 'relative';
         if (isDev) {
             clickCounterEl.style.border = '1px dashed var(--secondary)';
         } else {
@@ -3195,6 +3262,10 @@ function renderDevDashboard() {
                     if (key === 'daysLeftTargetDate') {
                         updateDaysLeftTracker();
                     }
+                    if (key === 'devMode') {
+                        updateDevModeUIStyles();
+                        renderDevDashboard();
+                    }
                 });
             });
             
@@ -3211,6 +3282,9 @@ function renderDevDashboard() {
                     }
                     if (key === 'daysLeftTargetDate') {
                         updateDaysLeftTracker();
+                    }
+                    if (key === 'devMode') {
+                        updateDevModeUIStyles();
                     }
                 });
             });
@@ -3255,6 +3329,77 @@ function updateDaysLeftTracker() {
     const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
     
     daysLeftCountEl.textContent = String(diffDays);
+}
+
+let activeDevStatKey = null;
+
+function openDevStatEditor(key) {
+    if (localStorage.getItem('devMode') !== 'true') return;
+    const overlay = document.getElementById('dev-stat-edit-overlay');
+    const title = document.getElementById('dev-stat-edit-title');
+    const label = document.getElementById('dev-stat-edit-label');
+    const input = document.getElementById('dev-stat-edit-input');
+    if (!overlay || !input || !title || !label) return;
+
+    activeDevStatKey = key;
+    if (key === 'daysLeftTargetDate') {
+        title.textContent = 'Edit countdown date';
+        label.textContent = 'Target date';
+        input.type = 'date';
+        input.value = localStorage.getItem(key) || '2026-07-10';
+    } else {
+        title.textContent = 'Edit Maya clicks';
+        label.textContent = 'Click count';
+        input.type = 'number';
+        input.min = '0';
+        input.step = '1';
+        input.value = localStorage.getItem(key) || '0';
+    }
+    overlay.classList.remove('hidden');
+    overlay.setAttribute('aria-hidden', 'false');
+    input.focus();
+}
+
+function closeDevStatEditor() {
+    const overlay = document.getElementById('dev-stat-edit-overlay');
+    if (!overlay) return;
+    overlay.classList.add('hidden');
+    overlay.setAttribute('aria-hidden', 'true');
+    activeDevStatKey = null;
+}
+
+function saveDevStatEditor() {
+    if (localStorage.getItem('devMode') !== 'true' || !activeDevStatKey) return;
+    const input = document.getElementById('dev-stat-edit-input');
+    if (!input) return;
+    const value = input.value.trim();
+    if (activeDevStatKey === 'daysLeftTargetDate') {
+        if (!value) {
+            localStorage.removeItem(activeDevStatKey);
+        } else {
+            const [year, month, day] = value.split('-').map(Number);
+            const date = new Date(year, month - 1, day);
+            if (!/^\d{4}-\d{2}-\d{2}$/.test(value)
+                || date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day) {
+                alert('Choose a valid target date.');
+                return;
+            }
+            localStorage.setItem(activeDevStatKey, value);
+        }
+        updateDaysLeftTracker();
+    } else {
+        const count = Number(value);
+        if (!Number.isSafeInteger(count) || count < 0) {
+            alert('Enter a whole number of zero or greater.');
+            return;
+        }
+        localStorage.setItem(activeDevStatKey, String(count));
+        const countEl = document.getElementById('maya-click-count');
+        if (countEl) countEl.textContent = String(count);
+    }
+    closeDevStatEditor();
+    renderDevDashboard();
+    updateDevModeUIStyles();
 }
 
 // Initial Setup
@@ -3397,9 +3542,11 @@ document.addEventListener('DOMContentLoaded', () => {
             if (key === 'mayaClickCount') {
                 const countEl = document.getElementById('maya-click-count');
                 if (countEl) countEl.textContent = val;
+                updateDevModeUIStyles();
             }
             if (key === 'daysLeftTargetDate') {
                 updateDaysLeftTracker();
+                updateDevModeUIStyles();
             }
         });
     }
@@ -3411,58 +3558,28 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Days Left Tracker Click Handler (Prompts for target date in Dev Mode)
     const daysLeftTracker = document.getElementById('days-left-tracker');
     if (daysLeftTracker) {
-        daysLeftTracker.addEventListener('click', () => {
-            const isDev = localStorage.getItem('devMode') === 'true';
-            if (!isDev) return;
-            
-            const currentTarget = localStorage.getItem('daysLeftTargetDate') || '2026-07-10';
-            const newDateStr = prompt("Enter target date for countdown (YYYY-MM-DD):", currentTarget);
-            if (newDateStr === null) return; // Cancelled
-            
-            if (newDateStr === "") {
-                localStorage.removeItem('daysLeftTargetDate');
-                alert("Target date reset to July 10th.");
-            } else {
-                const parsed = Date.parse(newDateStr);
-                if (isNaN(parsed)) {
-                    alert("Invalid date format. Please use YYYY-MM-DD.");
-                    return;
-                }
-                localStorage.setItem('daysLeftTargetDate', newDateStr);
-            }
-            updateDaysLeftTracker();
-            renderDevDashboard();
+        daysLeftTracker.addEventListener('click', () => openDevStatEditor('daysLeftTargetDate'));
+    }
+
+    const clickCounterEl = document.getElementById('maya-click-counter');
+    if (clickCounterEl) {
+        clickCounterEl.addEventListener('click', (event) => {
+            event.stopPropagation();
+            openDevStatEditor('mayaClickCount');
         });
     }
 
-    // Maya Click Counter Click Handler (Prompts for click count in Dev Mode)
-    const clickCounterEl = document.getElementById('maya-click-counter');
-    if (clickCounterEl) {
-        clickCounterEl.addEventListener('click', (e) => {
-            const isDev = localStorage.getItem('devMode') === 'true';
-            if (!isDev) return;
-            
-            e.stopPropagation();
-            
-            const currentCount = localStorage.getItem('mayaClickCount') || '0';
-            const newCountStr = prompt("Enter new click count for Maya:", currentCount);
-            if (newCountStr === null) return;
-            
-            const newCount = parseInt(newCountStr, 10);
-            if (isNaN(newCount) || newCount < 0) {
-                alert("Please enter a valid non-negative integer.");
-                return;
-            }
-            
-            localStorage.setItem('mayaClickCount', String(newCount));
-            const countEl = document.getElementById('maya-click-count');
-            if (countEl) countEl.textContent = String(newCount);
-            renderDevDashboard();
-        });
-    }
+    document.getElementById('dev-stat-edit-save').addEventListener('click', saveDevStatEditor);
+    document.getElementById('dev-stat-edit-cancel').addEventListener('click', closeDevStatEditor);
+    document.getElementById('dev-stat-edit-input').addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') saveDevStatEditor();
+        if (event.key === 'Escape') closeDevStatEditor();
+    });
+    document.getElementById('dev-stat-edit-overlay').addEventListener('click', (event) => {
+        if (event.target.id === 'dev-stat-edit-overlay') closeDevStatEditor();
+    });
 
     // Millionaire Skip Suspense Button Click Handler
     const skipSuspenseBtn = document.getElementById('millionaire-skip-suspense-btn');
@@ -3561,7 +3678,7 @@ if (mayaOtter) {
         // show playful toast
         const container = document.getElementById('toast-container');
         const popup = document.createElement('div');
-        popup.className = 'toast';
+        popup.className = 'toast maya-toast';
         popup.innerHTML = `
             <div style="text-align: center; width: 100%;">
                 <h4 style="margin: 0; color: var(--secondary); font-size: 1.1rem;">Maya!</h4>
