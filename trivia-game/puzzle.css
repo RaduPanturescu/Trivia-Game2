@@ -351,6 +351,8 @@
 }
 
 .puzzle-piece-tray {
+    position: relative;
+    z-index: 4;
     display: grid;
     justify-content: center;
     align-content: start;
@@ -391,9 +393,13 @@
 
 .puzzle-piece.is-dragging {
     position: fixed;
+    top: 0;
+    left: 0;
     z-index: 5000;
     pointer-events: none;
-    filter: drop-shadow(0 8px 12px rgba(0,0,0,0.7));
+    will-change: transform;
+    transition: none !important;
+    filter: drop-shadow(0 4px 6px rgba(0,0,0,0.5));
 }
 
 .puzzle-slot .puzzle-piece {

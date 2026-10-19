@@ -39,6 +39,8 @@
     let selectedPointerId = null;
     let dragOffsetX = 0;
     let dragOffsetY = 0;
+    let dragBaseX = 0;
+    let dragBaseY = 0;
     let placed = 0;
     let zoom = 1;
     let fittedWidth = 0;
@@ -357,39 +359,45 @@
     function dropPiece(event) {
         if (!selectedPiece || event.pointerId !== selectedPointerId) return;
         const piece = selectedPiece;
-        const pieceWidth = piece.getBoundingClientRect().width;
-        const pieceHeight = piece.getBoundingClientRect().height;
-        const pieceLeft = event.clientX - dragOffsetX;
-        const pieceTop = event.clientY - dragOffsetY;
-        const centerX = pieceLeft + pieceWidth / 2;
-        const centerY = pieceTop + pieceHeight / 2;
+        const pieceRect = piece.getBoundingClientRect();
+        const pieceLeft = pieceRect.left;
+        const pieceTop = pieceRect.top;
+        const centerX = pieceRect.left + pieceRect.width / 2;
+        const centerY = pieceRect.top + pieceRect.height / 2;
         const boardRect = elements.board.getBoundingClientRect();
         const cellWidth = boardRect.width / active.columns;
         const cellHeight = boardRect.height / active.rows;
         let target = -1;
         let nearCenter = false;
-        if (centerX >= boardRect.left && centerX <= boardRect.right && centerY >= boardRect.top && centerY <= boardRect.bottom) {
-            const column = Math.min(active.columns - 1, Math.floor((centerX - boardRect.left) / cellWidth));
-            const row = Math.min(active.rows - 1, Math.floor((centerY - boardRect.top) / cellHeight));
+        if (centerX >= boardRect.left - cellWidth * 0.5
+            && centerX <= boardRect.right + cellWidth * 0.5
+            && centerY >= boardRect.top - cellHeight * 0.5
+            && centerY <= boardRect.bottom + cellHeight * 0.5) {
+            const column = Math.max(0, Math.min(active.columns - 1,
+                Math.round((centerX - boardRect.left) / cellWidth - 0.5)));
+            const row = Math.max(0, Math.min(active.rows - 1,
+                Math.round((centerY - boardRect.top) / cellHeight - 0.5)));
             target = row * active.columns + column;
             const slotCenterX = boardRect.left + (column + 0.5) * cellWidth;
             const slotCenterY = boardRect.top + (row + 0.5) * cellHeight;
             nearCenter = Math.hypot(centerX - slotCenterX, centerY - slotCenterY)
-                <= Math.max(22, Math.min(cellWidth, cellHeight) * 0.38);
+                <= Math.min(cellWidth, cellHeight) * 0.3;
         }
 
-        piece.classList.remove('is-dragging');
-        piece.style.zIndex = '';
-        selectedPiece = null;
-        selectedPointerId = null;
         if (target === Number(piece.dataset.index) && nearCenter) {
             piece.classList.remove('is-scattered');
             piece.classList.add('is-placed');
-            piece.style.position = '';
             piece.style.left = '';
             piece.style.top = '';
+            piece.style.transform = '';
+            piece.style.willChange = '';
+            piece.style.zIndex = '';
             piece.disabled = true;
             elements.board.children[target].appendChild(piece);
+            piece.classList.remove('is-dragging');
+            piece.style.position = '';
+            selectedPiece = null;
+            selectedPointerId = null;
             placed += 1;
             finishPuzzle();
             return;
@@ -397,9 +405,17 @@
 
         const workspaceRect = elements.workspace.getBoundingClientRect();
         piece.classList.add('is-scattered');
-        piece.style.left = `${pieceLeft - workspaceRect.left + elements.workspace.scrollLeft}px`;
-        piece.style.top = `${pieceTop - workspaceRect.top + elements.workspace.scrollTop}px`;
+        piece.style.position = 'absolute';
+        piece.style.left = `${pieceLeft - workspaceRect.left - elements.workspace.clientLeft + elements.workspace.scrollLeft}px`;
+        piece.style.top = `${pieceTop - workspaceRect.top - elements.workspace.clientTop + elements.workspace.scrollTop}px`;
+        piece.style.transform = '';
+        piece.style.willChange = '';
+        piece.style.zIndex = '';
         elements.workspace.appendChild(piece);
+        piece.classList.remove('is-dragging');
+        piece.style.position = '';
+        selectedPiece = null;
+        selectedPointerId = null;
         elements.message.textContent = 'Piece dropped. Keep moving it until it is close to its matching outline.';
     }
 
@@ -458,9 +474,15 @@
                     dragOffsetY = event.clientY - rect.top;
                     piece.classList.remove('is-scattered');
                     piece.classList.add('is-dragging');
-                    piece.style.left = `${rect.left}px`;
-                    piece.style.top = `${rect.top}px`;
+                    piece.style.position = 'fixed';
+                    piece.style.left = '0';
+                    piece.style.top = '0';
+                    piece.style.willChange = 'transform';
                     document.body.appendChild(piece);
+                    const fixedRect = piece.getBoundingClientRect();
+                    dragBaseX = fixedRect.left;
+                    dragBaseY = fixedRect.top;
+                    piece.style.transform = `translate3d(${rect.left - dragBaseX}px, ${rect.top - dragBaseY}px, 0)`;
                     elements.message.textContent = 'Dragging — release near the matching outline to snap the piece in place.';
                 });
                 elements.tray.appendChild(piece);
@@ -508,10 +530,14 @@
     });
     elements.close.addEventListener('click', () => {
         if (selectedPiece) {
-            selectedPiece.classList.remove('is-dragging');
+            elements.tray.appendChild(selectedPiece);
+            selectedPiece.classList.remove('is-dragging', 'is-scattered');
+            selectedPiece.style.position = '';
             selectedPiece.style.left = '';
             selectedPiece.style.top = '';
-            elements.tray.appendChild(selectedPiece);
+            selectedPiece.style.transform = '';
+            selectedPiece.style.willChange = '';
+            selectedPiece.style.zIndex = '';
             selectedPiece = null;
             selectedPointerId = null;
         }
@@ -519,8 +545,7 @@
     });
     document.addEventListener('pointermove', (event) => {
         if (!selectedPiece || event.pointerId !== selectedPointerId) return;
-        selectedPiece.style.left = `${event.clientX - dragOffsetX}px`;
-        selectedPiece.style.top = `${event.clientY - dragOffsetY}px`;
+        selectedPiece.style.transform = `translate3d(${event.clientX - dragOffsetX - dragBaseX}px, ${event.clientY - dragOffsetY - dragBaseY}px, 0)`;
     });
     document.addEventListener('pointerup', dropPiece);
     document.addEventListener('pointercancel', dropPiece);
