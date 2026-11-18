@@ -1738,7 +1738,8 @@ button {
     background: #c0392b;
 }
 
-.exercise-box .start-btn {
+.exercise-box .start-btn,
+.workout-now-controls .start-btn {
     background: linear-gradient(135deg, var(--primary), var(--secondary));
     border-radius: 10px;
     padding: 8px 12px;
@@ -1746,7 +1747,8 @@ button {
     font-size: 0.8rem;
 }
 
-.exercise-box .complete-exercise-btn {
+.exercise-box .complete-exercise-btn,
+.workout-now-controls .complete-exercise-btn {
     padding: 8px 12px;
     border: 1px solid rgba(0,184,148,0.7);
     border-radius: 10px;
@@ -1756,16 +1758,19 @@ button {
     font-weight: 800;
 }
 
-.exercise-box .complete-exercise-btn:hover:not(:disabled) {
+.exercise-box .complete-exercise-btn:hover:not(:disabled),
+.workout-now-controls .complete-exercise-btn:hover:not(:disabled) {
     background: linear-gradient(135deg, #00a982, #00c99c);
 }
 
-.exercise-box .complete-exercise-btn.is-completed {
+.exercise-box .complete-exercise-btn.is-completed,
+.workout-now-controls .complete-exercise-btn.is-completed {
     border-color: rgba(0,184,148,0.42);
     background: rgba(0,184,148,0.38);
 }
 
-.exercise-box .complete-exercise-btn:disabled {
+.exercise-box .complete-exercise-btn:disabled,
+.workout-now-controls .complete-exercise-btn:disabled {
     opacity: 0.55;
     cursor: not-allowed;
 }
@@ -1776,7 +1781,8 @@ button {
     box-shadow: 0 0 18px rgba(0,184,148,0.2);
 }
 
-.exercise-box.resting .start-btn {
+.exercise-box.resting .start-btn,
+.workout-now-exercises li.resting .start-btn {
     background: linear-gradient(135deg, #008f70, #00b894);
     cursor: default;
 }
@@ -1841,6 +1847,118 @@ button {
     background: rgba(4, 5, 12, 0.78);
     backdrop-filter: blur(8px);
 }
+
+body.workout-overlay-open #weight-history-screen {
+    overflow: hidden;
+}
+
+.workout-simple-screen {
+    align-items: center;
+}
+
+.workout-simple-content {
+    width: min(520px, 100%);
+    padding: 55px 0 30px;
+}
+
+.workout-eyebrow {
+    color: var(--secondary);
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.16em;
+    text-align: center;
+}
+
+.workout-simple-content .subtitle {
+    margin-bottom: 26px;
+}
+
+.workout-menu-options {
+    display: grid;
+    gap: 12px;
+    margin-top: 46px;
+}
+
+.workout-menu-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    padding: 24px 18px;
+    border: 1px solid rgba(0, 206, 201, 0.2);
+    border-radius: 18px;
+    background: linear-gradient(135deg, rgba(42, 42, 69, 0.9), rgba(20, 23, 41, 0.95));
+    text-align: center;
+    transition: transform 150ms ease, border-color 150ms ease, background 150ms ease;
+}
+
+.workout-menu-card:hover, .workout-menu-card:focus-visible {
+    transform: translateY(-2px);
+}
+
+#workout-dashboard-btn:hover, #workout-dashboard-btn:focus-visible {
+    border-color: #9e8cff;
+    background: linear-gradient(135deg, rgba(108, 92, 231, 0.55), rgba(35, 29, 65, 0.98));
+    box-shadow: 0 0 24px rgba(108, 92, 231, 0.28);
+}
+
+#workout-now-btn:hover, #workout-now-btn:focus-visible {
+    border-color: #00cec9;
+    background: linear-gradient(135deg, rgba(0, 150, 145, 0.5), rgba(20, 38, 48, 0.98));
+    box-shadow: 0 0 24px rgba(0, 206, 201, 0.28);
+}
+
+#workout-health-btn:hover, #workout-health-btn:focus-visible {
+    border-color: #ff91a4;
+    background: linear-gradient(135deg, rgba(209, 81, 113, 0.5), rgba(50, 25, 45, 0.98));
+    box-shadow: 0 0 24px rgba(255, 118, 150, 0.28);
+}
+
+.workout-menu-card strong, .workout-menu-card small {
+    display: block;
+}
+
+.workout-menu-card strong { font-size: 1.05rem; }
+.workout-menu-card small { margin-top: 5px; color: var(--text-muted); font-size: 0.82rem; }
+
+.workout-day-status {
+    margin-top: 5px;
+    padding: 4px 8px;
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 999px;
+    background: rgba(255,255,255,0.07);
+    color: var(--text-muted);
+    font-size: 0.65rem;
+    font-weight: 800;
+    line-height: 1;
+    white-space: nowrap;
+}
+
+.workout-day-status[data-day-type="workout"] { color: #9af4cf; border-color: rgba(91,220,157,0.4); background: rgba(91,220,157,0.12); }
+.workout-day-status[data-day-type="rest"] { color: #c9b9ff; border-color: rgba(174,151,255,0.4); background: rgba(174,151,255,0.12); }
+
+#workout-now-list { color: var(--text-muted); text-align: center; }
+.workout-now-exercises { display: grid; gap: 10px; padding: 0; list-style: none; counter-reset: workout-exercise; text-align: left; }
+.workout-now-exercises li { counter-increment: workout-exercise; display: grid; grid-template-columns: 36px 1fr; gap: 4px 12px; align-items: center; padding: 16px; border: 1px solid rgba(0, 206, 201, 0.2); border-radius: 16px; background: rgba(255,255,255,0.04); }
+.workout-now-exercises li::before { content: counter(workout-exercise); grid-row: span 2; display: grid; place-items: center; width: 36px; height: 36px; border-radius: 12px; background: rgba(0,206,201,0.12); color: var(--secondary); font-weight: 800; }
+.workout-now-exercises strong { color: var(--text-main); }
+.workout-now-exercises li span { font-size: 0.82rem; line-height: 1.5; }
+.workout-now-controls { grid-column: 1 / -1; grid-row: auto; justify-self: stretch; margin-top: 8px; flex-wrap: wrap; }
+.workout-now-controls .complete-exercise-btn { margin-left: auto; }
+.workout-now-controls .skip-workout-phase-btn { margin-top: 0; }
+.workout-now-controls [hidden] { display: none; }
+.workout-now-rest { padding: 36px 16px; border: 1px solid rgba(0,206,201,0.2); border-radius: 18px; background: rgba(0,206,201,0.06); color: var(--secondary); font-size: 1.2rem; font-weight: 800; }
+
+.health-log-weight-btn { align-self: center; }
+.bmi-panel { border-color: rgba(0,206,201,0.14); }
+.bmi-hint { color: var(--text-muted); font-size: 0.82rem; line-height: 1.5; }
+.bmi-form { display: flex; align-items: end; gap: 12px; flex-wrap: wrap; margin-top: 16px; }
+.bmi-form label { display: grid; flex: 1 1 150px; gap: 7px; color: var(--text-muted); font-size: 0.85rem; }
+.bmi-form input { width: 100%; padding: 11px; border: 1px solid var(--glass-border); border-radius: 10px; background: rgba(0,0,0,0.25); color: var(--text-main); font: inherit; }
+.bmi-form input:focus { outline: 2px solid rgba(0,206,201,0.5); outline-offset: 2px; }
+.bmi-result { margin: 16px 0 8px; color: var(--secondary); font-weight: 700; line-height: 1.5; }
 
 .workout-weight-entry-card {
     display: grid;

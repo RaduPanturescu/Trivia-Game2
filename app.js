@@ -29,6 +29,8 @@ const screens = {
     result: document.getElementById('result-screen'),
     qotd: document.getElementById('qotd-screen'),
     profile: document.getElementById('profile-screen'),
+    workoutMenu: document.getElementById('workout-menu-screen'),
+    workoutNow: document.getElementById('workout-now-screen'),
     workout: document.getElementById('workout-screen'),
     weightHistory: document.getElementById('weight-history-screen'),
     millionaireTitle: document.getElementById('millionaire-title-screen'),
@@ -443,6 +445,11 @@ function shuffle(array) {
 
 // Screen Transitions
 function showScreen(screenName) {
+    if (screenName === 'workoutMenu') updateWorkoutMenuDayStatus();
+    else if (workoutMenuStatusTimer) {
+        clearTimeout(workoutMenuStatusTimer);
+        workoutMenuStatusTimer = null;
+    }
     if (screenTransitionTimeout) {
         clearTimeout(screenTransitionTimeout);
         screenTransitionTimeout = null;
@@ -1012,29 +1019,46 @@ backToMenuBtn.addEventListener('click', () => {
 const workoutWelcomeBtn = document.getElementById('workout-welcome-btn');
 const workoutMenuBtn = document.getElementById('workout-program-btn');
 const backToMenuFromWorkout = document.getElementById('back-to-menu-from-workout');
+let workoutMenuReturnScreen = 'welcome';
+let weightHistoryReturnScreen = 'workoutMenu';
+
+function openWorkoutMenu() {
+    workoutMenuReturnScreen = currentScreen;
+    playPopSound();
+    showScreen('workoutMenu');
+}
 
 if (workoutWelcomeBtn) {
-    workoutWelcomeBtn.addEventListener('click', () => {
-        playPopSound();
-        showScreen('workout');
-        renderWorkoutPlanner();
-    });
+    workoutWelcomeBtn.addEventListener('click', openWorkoutMenu);
 }
 
 if (workoutMenuBtn) {
-    workoutMenuBtn.addEventListener('click', () => {
-        playPopSound();
-        showScreen('workout');
-        renderWorkoutPlanner();
-    });
+    workoutMenuBtn.addEventListener('click', openWorkoutMenu);
 }
 
 if (backToMenuFromWorkout) {
     backToMenuFromWorkout.addEventListener('click', () => {
         playPopSound();
-        showScreen('welcome');
+        showScreen('workoutMenu');
     });
 }
+
+document.getElementById('workout-menu-back-btn').addEventListener('click', () => showScreen(workoutMenuReturnScreen));
+document.getElementById('workout-dashboard-btn').addEventListener('click', () => {
+    playPopSound();
+    renderWorkoutPlanner();
+    showScreen('workout');
+});
+document.getElementById('workout-now-btn').addEventListener('click', () => {
+    playPopSound();
+    renderWorkoutNow();
+    showScreen('workoutNow');
+});
+document.getElementById('workout-now-back-btn').addEventListener('click', () => showScreen('workoutMenu'));
+document.getElementById('workout-health-btn').addEventListener('click', () => {
+    playPopSound();
+    openWeightHistoryScreen();
+});
 
 finishBtn.addEventListener('click', () => {
     playPopSound();
@@ -1550,6 +1574,11 @@ const workoutState = {
 };
 let workoutCalendarMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
 let workoutCalendarEditingDate = null;
+let workoutMenuStatusTimer = null;
+
+document.addEventListener('visibilitychange', () => {
+    if (!document.hidden && currentScreen === 'workoutMenu') updateWorkoutMenuDayStatus();
+});
 
 const WORKOUT_WEEKLY_TEMPLATE_KEY = 'triviaWorkoutWeeklyTemplate';
 
@@ -1897,6 +1926,125 @@ function getWorkoutDayForDate(dateString) {
     const canonicalDay = canonicalWeek?.days.find(day => day.date === dateString);
     if (canonicalDay) return canonicalDay;
     return workoutState.weeks.flatMap(week => week.days || []).find(day => day.date === dateString) || null;
+}
+
+function getTodayWorkoutDay(today = new Date()) {
+    const dateKey = isoDate(today);
+    const weekStart = isoDate(getMonday(today));
+    let week = workoutState.weeks.find(item => item.weekStart === weekStart);
+    if (!week) {
+        week = createDefaultWorkoutWeek(parseWorkoutDate(weekStart));
+        week.days.forEach(day => {
+            if (day.date < dateKey) {
+                day.type = null;
+                day.exercises = [];
+                day.completed = false;
+            }
+        });
+        workoutState.weeks.unshift(week);
+        saveWorkoutData();
+    }
+    return week.days.find(item => item.date === dateKey) || null;
+}
+
+function updateWorkoutMenuDayStatus() {
+    const status = document.getElementById('workout-now-day-status');
+    if (!status) return;
+    const type = getTodayWorkoutDay()?.type;
+    status.dataset.dayType = type || 'none';
+    status.textContent = type === 'rest' ? 'Rest Day' : type === 'workout' ? 'Workout Day' : 'No plan';
+    clearTimeout(workoutMenuStatusTimer);
+    const now = new Date();
+    const midnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+    workoutMenuStatusTimer = setTimeout(() => {
+        if (currentScreen === 'workoutMenu') updateWorkoutMenuDayStatus();
+    }, midnight - now + 50);
+}
+
+function renderWorkoutNow() {
+    const today = new Date();
+    const day = getTodayWorkoutDay(today);
+    document.getElementById('workout-now-date').textContent = today.toLocaleDateString(undefined, {
+        weekday: 'long', month: 'long', day: 'numeric', year: 'numeric'
+    });
+    const container = document.getElementById('workout-now-list');
+    container.replaceChildren();
+    if (!day || day.type === null) {
+        container.textContent = 'No workout scheduled for today.';
+    } else if (day.type === 'rest') {
+        const rest = document.createElement('p');
+        rest.className = 'workout-now-rest';
+        rest.textContent = 'REST DAY, time to rest';
+        container.appendChild(rest);
+    } else if (!day.exercises?.length) {
+        container.textContent = 'No exercises scheduled for today.';
+    } else {
+        const list = document.createElement('ol');
+        list.className = 'workout-now-exercises';
+        day.exercises.forEach((exercise, index) => {
+            const item = document.createElement('li');
+            item.dataset.exerciseIndex = String(index);
+            const name = document.createElement('strong');
+            name.textContent = exercise.name;
+            const details = document.createElement('span');
+            details.textContent = [
+                `${exercise.sets} sets`,
+                exercise.repsTillFailure ? "'Till Failure" : `${exercise.reps} reps`,
+                exercise.bodyWeight ? 'Body Weight' : `${exercise.weight || 0} kg`,
+                `${exercise.rest || 60}s rest`
+            ].join(' • ');
+            const controls = document.createElement('div');
+            controls.className = 'exercise-start-control workout-now-controls';
+            const start = document.createElement('button');
+            start.type = 'button';
+            start.className = 'start-btn';
+            start.dataset.action = 'start';
+            start.addEventListener('click', () => startWorkoutExercise(day, index));
+            const complete = document.createElement('button');
+            complete.type = 'button';
+            complete.className = 'complete-exercise-btn';
+            complete.dataset.action = 'complete';
+            complete.addEventListener('click', () => completeWorkoutExercise(day, index));
+            const skip = document.createElement('button');
+            skip.type = 'button';
+            skip.className = 'skip-workout-phase-btn';
+            skip.dataset.action = 'skip';
+            skip.textContent = 'Skip Timer →';
+            skip.addEventListener('click', skipWorkoutTimerPhase);
+            controls.append(start, skip, complete);
+            item.append(name, details, controls);
+            list.appendChild(item);
+        });
+        container.appendChild(list);
+        refreshWorkoutNowControls();
+    }
+}
+
+function refreshWorkoutNowControls() {
+    const day = getWorkoutDayForDate(isoDate(new Date()));
+    if (!day || day.type !== 'workout') return;
+    document.querySelectorAll('#workout-now-list [data-exercise-index]').forEach(item => {
+        const index = Number(item.dataset.exerciseIndex);
+        const exercise = day.exercises[index];
+        if (!exercise) return;
+        const active = workoutState.activeDayDate === day.date && workoutState.activeExerciseIndex === index && workoutState.timerMode !== 'idle';
+        const resting = active && workoutState.timerMode === 'rest';
+        const totalSets = Number(exercise.sets || 1);
+        const currentSet = Math.min(Number(exercise.currentSet || 1), totalSets);
+        const start = item.querySelector('[data-action="start"]');
+        const complete = item.querySelector('[data-action="complete"]');
+        const skip = item.querySelector('[data-action="skip"]');
+        start.disabled = active || !!exercise.completed;
+        start.textContent = resting ? `Rest ${formatCountdownTime(workoutState.timerRemaining)}`
+            : active ? `Timer ${workoutState.timerRemaining}s`
+            : exercise.completed ? 'Completed ✓'
+            : totalSets > 1 ? `Start Set ${currentSet}/${totalSets}` : 'Start Exercise';
+        complete.textContent = exercise.completed ? 'Completed ✓' : 'Complete';
+        complete.classList.toggle('is-completed', !!exercise.completed);
+        skip.hidden = !active;
+        item.classList.toggle('completed', !!exercise.completed);
+        item.classList.toggle('resting', resting);
+    });
 }
 
 function getCurrentWorkoutDay() {
@@ -2607,6 +2755,11 @@ function saveWorkoutWeightEntry(event) {
     localStorage.setItem(BODY_WEIGHT_ENTRIES_KEY, JSON.stringify(entries));
     closeWorkoutWeightEntry();
     renderWorkoutWeightButton();
+    if (currentScreen === 'weightHistory') {
+        renderWeightHistoryGraph();
+        renderWeightHistoryStats();
+        renderBmiResult();
+    }
     showToast({ icon: '⚖️', name: 'Weight saved', desc: `${weight} kg recorded for today.` });
 }
 
@@ -2773,11 +2926,31 @@ function getFirstWorkoutDate() {
     return dates[0] || null;
 }
 
+function renderBmiResult() {
+    const heightInput = document.getElementById('bmi-height');
+    const ageInput = document.getElementById('bmi-age');
+    const result = document.getElementById('bmi-result');
+    const latestWeight = getBodyWeightEntries().at(-1);
+    if (!heightInput.value || !ageInput.value || !heightInput.validity.valid || !ageInput.validity.valid) {
+        result.textContent = 'Log your weight and enter your height and age to calculate your BMI.';
+        return;
+    }
+    if (!latestWeight) {
+        result.textContent = 'Log your weight to calculate your BMI.';
+        return;
+    }
+    const heightMetres = Number(heightInput.value) / 100;
+    const bmi = latestWeight.weight / (heightMetres * heightMetres);
+    result.textContent = `Your BMI is ${bmi.toFixed(1)} kg/m², using ${latestWeight.weight} kg recorded on ${parseWorkoutDate(latestWeight.date).toLocaleDateString()}.`;
+}
+
 function openWeightHistoryScreen() {
+    weightHistoryReturnScreen = currentScreen === 'workout' ? 'workout' : 'workoutMenu';
     document.getElementById('workout-weight-menu').hidden = true;
     document.getElementById('workout-weight-btn').setAttribute('aria-expanded', 'false');
     renderWeightHistoryGraph();
     renderWeightHistoryStats();
+    renderBmiResult();
     showScreen('weightHistory');
 }
 
@@ -3716,6 +3889,7 @@ function renderWorkoutPlanner() {
     addCategoryFilterButtons();
     renderWorkoutExerciseList();
     saveWorkoutData();
+    if (currentScreen === 'workoutNow') refreshWorkoutNowControls();
 }
 
 function syncWorkoutWeekNavigation(direction) {
@@ -3822,7 +3996,25 @@ function initializeWorkoutProgram() {
     document.getElementById('workout-weight-entry-overlay')?.addEventListener('click', event => {
         if (event.target.id === 'workout-weight-entry-overlay') closeWorkoutWeightEntry();
     });
-    document.getElementById('weight-history-back-btn')?.addEventListener('click', () => showScreen('workout'));
+    document.getElementById('weight-history-back-btn')?.addEventListener('click', () => showScreen(weightHistoryReturnScreen));
+    document.getElementById('health-log-weight-btn')?.addEventListener('click', openWorkoutWeightEntry);
+    const bmiHeight = document.getElementById('bmi-height');
+    const bmiAge = document.getElementById('bmi-age');
+    try {
+        const savedBmiInputs = JSON.parse(localStorage.getItem('triviaWorkoutBmiInputs') || '{}');
+        bmiHeight.value = savedBmiInputs.height || '';
+        bmiAge.value = savedBmiInputs.age || '';
+    } catch (error) {
+        // Ignore malformed saved measurements.
+    }
+    document.getElementById('bmi-form')?.addEventListener('submit', event => {
+        event.preventDefault();
+        localStorage.setItem('triviaWorkoutBmiInputs', JSON.stringify({ height: bmiHeight.value, age: bmiAge.value }));
+        renderBmiResult();
+    });
+    [bmiHeight, bmiAge].forEach(input => input.addEventListener('input', () => {
+        document.getElementById('bmi-result').textContent = 'Select Calculate BMI to update your result.';
+    }));
     document.addEventListener('keydown', event => {
         if (event.key === 'Escape') {
             const weightOverlay = document.getElementById('workout-weight-entry-overlay');
@@ -3964,14 +4156,6 @@ function initializeWorkoutProgram() {
         if (event.key === 'Enter') addWorkoutCategory();
     });
     hydrateWorkoutCategoriesSelect();
-}
-
-const workoutProgramToggle = document.getElementById('workout-program-btn');
-if (workoutProgramToggle) {
-    workoutProgramToggle.addEventListener('click', () => {
-        showScreen('workout');
-        renderWorkoutPlanner();
-    });
 }
 
 function createQrCodeImageFromText() {

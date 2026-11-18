@@ -141,13 +141,37 @@
             <button id="profile-btn-menu" aria-label="Profile">👤</button>
         </div>
 
-        <!-- Workout Program Screen -->
+        <!-- Workout Program Menu -->
+        <div id="workout-menu-screen" class="screen workout-simple-screen">
+            <button id="workout-menu-back-btn" class="back-btn" type="button" aria-label="Back to main menu">←</button>
+            <div class="workout-simple-content">
+                <p class="workout-eyebrow">YOUR TRAINING SPACE</p>
+                <h2 class="screen-title">Workout Program</h2>
+                <div class="workout-menu-options">
+                    <button id="workout-dashboard-btn" class="workout-menu-card" type="button"><strong>Dashboard</strong><small>View and manage your program</small></button>
+                    <button id="workout-now-btn" class="workout-menu-card" type="button"><strong>Workout Now</strong><span id="workout-now-day-status" class="workout-day-status">Checking today</span></button>
+                    <button id="workout-health-btn" class="workout-menu-card" type="button"><strong>Health Stats</strong></button>
+                </div>
+            </div>
+        </div>
+
+        <div id="workout-now-screen" class="screen workout-simple-screen">
+            <button id="workout-now-back-btn" class="back-btn" type="button" aria-label="Back to workout menu">←</button>
+            <div class="workout-simple-content workout-now-content">
+                <p class="workout-eyebrow">TODAY'S PLAN</p>
+                <h2 class="screen-title">Workout Now</h2>
+                <p id="workout-now-date" class="subtitle"></p>
+                <div id="workout-now-list"></div>
+            </div>
+        </div>
+
+        <!-- Workout Dashboard -->
         <div id="workout-screen" class="screen">
-            <button class="back-btn" id="back-to-menu-from-workout" type="button" aria-label="Back to menu">←</button>
+            <button class="back-btn" id="back-to-menu-from-workout" type="button" aria-label="Back to workout menu">←</button>
             <div class="workout-shell">
                 <div class="workout-header-row">
                     <div>
-                        <h2 class="screen-title workout-title">Workout Program</h2>
+                        <h2 class="screen-title workout-title">Workout Dashboard</h2>
                     </div>
                     <div class="workout-header-actions">
                         <div class="workout-weight-menu-wrap">
@@ -303,6 +327,7 @@
                     </div>
                 </details>
             </div>
+            </div>
             <div id="workout-weight-entry-overlay" class="workout-weight-entry-overlay" hidden>
                 <form id="workout-weight-entry-form" class="workout-weight-entry-card" role="dialog" aria-modal="true" aria-labelledby="workout-weight-entry-title">
                     <h3 id="workout-weight-entry-title">Log your weight</h3>
@@ -318,17 +343,27 @@
                         <button id="workout-weight-cancel-btn" class="mini-btn" type="button">Cancel</button>
                     </div>
                 </form>
-            </div>
         </div>
 
         <div id="weight-history-screen" class="screen weight-history-screen">
-            <button id="weight-history-back-btn" class="back-btn" type="button" aria-label="Back to workout program">←</button>
+            <button id="weight-history-back-btn" class="back-btn" type="button" aria-label="Back">←</button>
             <div class="weight-history-content">
-                <h2 class="screen-title">Weight Progress</h2>
-                <p class="subtitle">Your recorded bodyweight over time</p>
+                <h2 class="screen-title">Health Stats</h2>
+                <p class="subtitle">Your weight progress and health measurements</p>
+                <button id="health-log-weight-btn" class="mini-btn health-log-weight-btn" type="button">＋ Log weight</button>
                 <section class="workout-panel weight-chart-panel">
-                    <div id="weight-history-empty" class="weight-history-empty" hidden>No weight entries yet. Add your first weight from the Workout Program.</div>
+                    <div id="weight-history-empty" class="weight-history-empty" hidden>No weight entries yet. Log your first weight to see your progress.</div>
                     <div id="weight-chart-wrap" class="weight-chart-wrap" aria-label="Bodyweight over time chart"></div>
+                </section>
+                <section class="workout-panel bmi-panel">
+                    <div class="panel-header"><h3>BMI Calculator</h3></div>
+                    <p class="bmi-hint">Uses your most recently recorded weight.</p>
+                    <form id="bmi-form" class="bmi-form">
+                        <label for="bmi-height">Height (cm)<input id="bmi-height" type="number" min="30" max="300" step="0.1" inputmode="decimal" required placeholder="e.g. 170" /></label>
+                        <label for="bmi-age">Age (years)<input id="bmi-age" type="number" min="1" max="120" step="1" inputmode="numeric" required placeholder="e.g. 30" /></label>
+                        <button class="primary-btn small-btn" type="submit">Calculate BMI</button>
+                    </form>
+                    <p id="bmi-result" class="bmi-result" aria-live="polite">Log your weight and enter your height and age to calculate your BMI.</p>
                 </section>
                 <section class="workout-panel weight-history-stats-panel">
                     <div class="panel-header"><h3>Other Stats</h3></div>
