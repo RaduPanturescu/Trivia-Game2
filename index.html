@@ -161,6 +161,7 @@
                 <p class="workout-eyebrow">TODAY'S PLAN</p>
                 <h2 class="screen-title">Workout Now</h2>
                 <p id="workout-now-date" class="subtitle"></p>
+                <p id="workout-now-estimate" class="workout-now-estimate" hidden></p>
                 <div id="workout-now-list"></div>
             </div>
         </div>
@@ -213,7 +214,13 @@
                     <details class="workout-panel program-builder-panel collapsible-panel">
                         <summary class="panel-header"><h3>Program Builder</h3><span class="collapse-indicator" aria-hidden="true">⌄</span></summary>
                         <div class="collapsible-content">
-                        <div id="workout-category-filters" class="filter-row"></div>
+                        <div class="workout-builder-filters">
+                            <div id="workout-category-filters" class="filter-row" role="group" aria-label="Exercise categories"></div>
+                            <div class="workout-type-filters" role="group" aria-label="Exercise type">
+                                <button class="filter-chip" type="button" data-exercise-type="bodyweight" aria-pressed="false">Bodyweight</button>
+                                <button class="filter-chip" type="button" data-exercise-type="weighted" aria-pressed="false">Weighted</button>
+                            </div>
+                        </div>
                         <div id="workout-exercise-list" class="workout-exercise-list"></div>
                         <button id="workout-create-exercise-btn" class="primary-btn small-btn create-exercise-btn" type="button">＋ Create New Exercise</button>
                         <div id="workout-exercise-editor" class="exercise-editor" hidden>
@@ -315,6 +322,7 @@
                                 <select id="workout-saved-plans-select"><option value="">Choose a saved plan</option></select>
                             </label>
                             <button id="workout-switch-plan-btn" class="mini-btn" type="button" disabled>Switch Plan</button>
+                            <button id="workout-delete-plan-btn" class="mini-btn" type="button" hidden>Delete Plan</button>
                         </div>
                     </div>
                 </details>
@@ -933,6 +941,13 @@
                 </div>
             </section>
         </div>
+        <div id="workout-timer-done-overlay" class="workout-timer-done-overlay" hidden>
+            <section class="workout-timer-done-card" role="alertdialog" aria-modal="true" aria-labelledby="workout-timer-done-title">
+                <h3 id="workout-timer-done-title">Timer done!</h3>
+                <p>Your countdown has finished.</p>
+                <button id="workout-timer-done-close" class="primary-btn small-btn" type="button">OK</button>
+            </section>
+        </div>
     </div>
 
     <div id="mail-preview-overlay" class="mail-preview-overlay hidden" aria-hidden="true">
@@ -962,6 +977,9 @@
     <!-- Audio Elements -->
     <audio id="bg-music" loop>
         <source src="bg-music.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="workout-music" loop>
+        <source src="assets/WorkoutMusic.wav" type="audio/wav">
     </audio>
     <audio id="sfx-correct">
         <source src="sfx-correct.mp3" type="audio/mpeg">

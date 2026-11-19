@@ -120,9 +120,8 @@ function renderMinesweeperBoard() {
     if (!boardEl) return;
     
     boardEl.innerHTML = '';
-    boardEl.style.gridTemplateColumns = `repeat(${minesweeperState.cols}, 1fr)`;
-    boardEl.style.gridTemplateRows = `repeat(${minesweeperState.rows}, 1fr)`;
-    boardEl.style.aspectRatio = `${minesweeperState.cols} / ${minesweeperState.rows}`;
+    boardEl.style.setProperty('--minesweeper-columns', minesweeperState.cols);
+    boardEl.style.setProperty('--minesweeper-rows', minesweeperState.rows);
     
     for (let r = 0; r < minesweeperState.rows; r++) {
         for (let c = 0; c < minesweeperState.cols; c++) {

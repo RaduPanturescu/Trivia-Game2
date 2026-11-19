@@ -179,6 +179,7 @@ const millionaireData = [
 
 // Sound Effects & Music
 const bgMusic = document.getElementById('bg-music');
+const workoutMusic = document.getElementById('workout-music');
 const musicToggle = document.getElementById('music-toggle');
 const soundToggle = document.getElementById('sound-toggle');
 const musicVolumeRow = document.getElementById('music-volume-row');
@@ -187,6 +188,7 @@ const sfxPopSound = document.getElementById('sfx-pop');
 const sfxVolumeSlider = document.getElementById('sfx-volume');
 const musicVolumeSlider = document.getElementById('music-volume');
 let isMusicPlaying = false;
+let workoutMusicActive = false;
 let musicEnabled = true;
 let soundEnabled = true;
 let sfxVolume = 0.3;
@@ -445,6 +447,10 @@ function shuffle(array) {
 
 // Screen Transitions
 function showScreen(screenName) {
+    if (workoutMusicActive && !['workoutMenu', 'workout', 'workoutNow', 'weightHistory'].includes(screenName)) {
+        pauseWorkoutClocks();
+    }
+    syncWorkoutMusic(screenName);
     if (screenName === 'workoutMenu') updateWorkoutMenuDayStatus();
     else if (workoutMenuStatusTimer) {
         clearTimeout(workoutMenuStatusTimer);
@@ -1082,7 +1088,10 @@ if (resetProfileBtn) {
 if (resetAllProgressBtn) {
     resetAllProgressBtn.addEventListener('click', () => {
         playPopSound();
-        if (!confirm('Reset every stat, achievement, and workout plan across the app? This is permanent.')) return;
+        if (!confirm('Reset every stat, achievement, and workout plan across the app? This is permanent.')) {
+            sessionStorage.removeItem('triviaResetToWorkoutDashboard');
+            return;
+        }
         const customWorkoutAchievements = localStorage.getItem('triviaWorkoutCustomAchievements');
         localStorage.clear();
         if (customWorkoutAchievements) {
@@ -1093,6 +1102,10 @@ if (resetAllProgressBtn) {
                 localStorage.removeItem('triviaWorkoutCustomAchievements');
             }
         }
+        const today = isoDate(new Date());
+        const restDayTemplates = Object.fromEntries(Array.from({ length: 7 }, (_, index) => [index, { type: 'rest', exercises: [] }]));
+        localStorage.setItem(WORKOUT_WEEKLY_TEMPLATE_KEY, JSON.stringify(restDayTemplates));
+        localStorage.setItem('triviaWorkoutProgramStartDate', today);
         window.location.reload();
     });
 }
@@ -1233,9 +1246,11 @@ function loadData() {
     if (savedMusicVolume !== null) {
         musicVolumeSlider.value = savedMusicVolume;
         bgMusic.volume = parseFloat(savedMusicVolume);
+        workoutMusic.volume = parseFloat(savedMusicVolume);
     } else {
         musicVolumeSlider.value = 0.2;
         bgMusic.volume = 0.2;
+        workoutMusic.volume = 0.2;
     }
 
     // Load sound effects preference
@@ -1262,6 +1277,7 @@ musicToggle.addEventListener('change', (e) => {
         if (!isMusicPlaying) playMusic();
     } else {
         bgMusic.pause();
+        workoutMusic.pause();
         isMusicPlaying = false;
     }
 });
@@ -1269,6 +1285,7 @@ musicToggle.addEventListener('change', (e) => {
 musicVolumeSlider.addEventListener('input', (e) => {
     const volume = parseFloat(e.target.value);
     bgMusic.volume = volume;
+    workoutMusic.volume = volume;
     localStorage.setItem('triviaMusicVolume', volume);
 });
 
@@ -1283,14 +1300,26 @@ sfxVolumeSlider.addEventListener('input', (e) => {
     localStorage.setItem('triviaSfxVolume', sfxVolume);
 });
 
+function syncWorkoutMusic(screenName) {
+    const isWorkoutScreen = ['workoutMenu', 'workout', 'workoutNow', 'weightHistory'].includes(screenName);
+    if (isWorkoutScreen === workoutMusicActive) return;
+    workoutMusicActive = isWorkoutScreen;
+    (isWorkoutScreen ? bgMusic : workoutMusic).pause();
+    isMusicPlaying = false;
+    if (musicEnabled) playMusic();
+}
+
 function playMusic() {
     if (musicEnabled && !isMusicPlaying && !millionaireFlowActive) {
-        const volume = parseFloat(musicVolumeSlider.value) || 0.3;
-        bgMusic.volume = volume;
-        bgMusic.play().then(() => {
-            isMusicPlaying = true;
-        }).catch(err => {
-            console.log("Autoplay blocked by browser. Awaiting interaction.");
+        const track = workoutMusicActive ? workoutMusic : bgMusic;
+        const volume = parseFloat(musicVolumeSlider.value);
+        track.volume = Number.isFinite(volume) ? volume : 0.3;
+        track.play().then(() => {
+            if (musicEnabled && track === (workoutMusicActive ? workoutMusic : bgMusic)) {
+                isMusicPlaying = true;
+            }
+        }).catch(() => {
+            // Playback can be blocked until a user interaction.
         });
     }
 }
@@ -1514,18 +1543,32 @@ function renderAchievements() {
 const workoutExerciseCatalog = [
     { id: 'bench-press', name: 'Bench Press', category: 'chest', sets: 4, reps: 8, weight: 20, duration: 45, rest: 60, description: 'Press from a flat bench with a strong full-body brace.' },
     { id: 'incline-press', name: 'Incline Press', category: 'chest', sets: 3, reps: 10, weight: 15, duration: 45, rest: 60, description: 'Target the upper chest with controlled bar speed.' },
-    { id: 'push-up', name: 'Push Ups', category: 'upper body', sets: 3, reps: 12, weight: 0, duration: 35, rest: 45, description: 'Bodyweight press that hits chest, shoulders and triceps.' },
+    { id: 'push-up', name: 'Push Ups', category: 'upper body', sets: 3, reps: 12, weight: 0, bodyWeight: true, duration: 35, rest: 45, description: 'Bodyweight press that hits chest, shoulders and triceps.' },
     { id: 'overhead-press', name: 'Overhead Press', category: 'upper body', sets: 4, reps: 8, weight: 10, duration: 40, rest: 60, description: 'Drive through with strict pressing form.' },
     { id: 'bicep-curl', name: 'Bicep Curl', category: 'arms', sets: 3, reps: 12, weight: 8, duration: 35, rest: 45, description: 'Curl the weight with a strong squeeze at the top.' },
-    { id: 'tricep-dips', name: 'Tricep Dips', category: 'arms', sets: 3, reps: 10, weight: 0, duration: 35, rest: 45, description: 'Use bench or chair to control each rep.' },
+    { id: 'tricep-dips', name: 'Tricep Dips', category: 'arms', sets: 3, reps: 10, weight: 0, bodyWeight: true, duration: 35, rest: 45, description: 'Use bench or chair to control each rep.' },
     { id: 'squat', name: 'Back Squat', category: 'legs', sets: 4, reps: 8, weight: 35, duration: 50, rest: 75, description: 'Standard lower-body lift to build strength and power.' },
     { id: 'lunge', name: 'Walking Lunge', category: 'legs', sets: 3, reps: 10, weight: 10, duration: 40, rest: 50, description: 'Strong single-leg control with an upright posture.' },
     { id: 'hip-thrust', name: 'Hip Thrust', category: 'glutes', sets: 4, reps: 10, weight: 25, duration: 45, rest: 60, description: 'Drive through the hips and keep the ribs down.' },
     { id: 'deadlift', name: 'Romanian Deadlift', category: 'glutes', sets: 3, reps: 8, weight: 30, duration: 45, rest: 60, description: 'Hinge at the hips and control the lower back.' },
     { id: 'kettlebell-swing', name: 'Kettlebell Swing', category: 'kettlebell', sets: 4, reps: 12, weight: 12, duration: 35, rest: 45, description: 'Explosive hip drive and a full range of motion.' },
     { id: 'goblet-squat', name: 'Goblet Squat', category: 'kettlebell', sets: 3, reps: 12, weight: 12, duration: 40, rest: 45, description: 'Hold the kettlebell close and maintain depth.' },
-    { id: 'plank', name: 'Plank Hold', category: 'core', sets: 3, reps: 1, weight: 0, duration: 45, rest: 30, description: 'Keep the torso braced and maintain a straight line.' },
-    { id: 'jump-rope', name: 'Jump Rope', category: 'conditioning', sets: 4, reps: 20, weight: 0, duration: 40, rest: 30, description: 'Short cardio bursts to keep the heart rate up.' }
+    { id: 'plank', name: 'Plank Hold', category: 'core', sets: 3, reps: 1, weight: 0, bodyWeight: true, duration: 45, rest: 30, description: 'Keep the torso braced and maintain a straight line.' },
+    { id: 'jump-rope', name: 'Jump Rope', category: 'conditioning', sets: 4, reps: 20, weight: 0, bodyWeight: true, duration: 40, rest: 30, description: 'Short cardio bursts to keep the heart rate up.' },
+    { id: 'sit-ups', name: 'Sit-Ups', category: 'core', sets: 3, reps: 12, weight: 0, bodyWeight: true, duration: 45, rest: 60, description: 'Raise and lower your torso with control.' },
+    { id: 'bodyweight-lunges', name: 'Lunges', category: 'legs', sets: 3, reps: 10, weight: 0, bodyWeight: true, duration: 45, rest: 60, description: 'Step into a lunge and alternate legs with control.' },
+    { id: 'bodyweight-squats', name: 'Squats', category: 'legs', sets: 3, reps: 12, weight: 0, bodyWeight: true, duration: 45, rest: 60, description: 'Squat with your body weight and stand tall.' },
+    { id: 'close-grip-push-ups', name: 'Close Grip Push Ups', category: 'upper body', sets: 3, reps: 10, weight: 0, bodyWeight: true, duration: 45, rest: 60, description: 'Perform push-ups with your hands close together.' },
+    { id: 'cheat-push-ups', name: 'Cheat Push-Ups', category: 'upper body', sets: 3, reps: 10, weight: 0, bodyWeight: true, duration: 45, rest: 60, description: 'Push-ups from a kneeling position.' },
+    { id: 'pull-ups', name: 'Pull Ups', category: 'upper body', sets: 3, reps: 8, weight: 0, bodyWeight: true, duration: 45, rest: 60, description: 'Pull up to the bar and lower with control.' },
+    { id: 'chin-ups', name: 'Chin-Ups', category: 'arms', sets: 3, reps: 8, weight: 0, bodyWeight: true, duration: 45, rest: 60, description: 'Pull up to a bar with an underhand grip and lower with control.' },
+    { id: 'reverse-crunches', name: 'Reverse Crunches', category: 'core', sets: 3, reps: 12, weight: 0, bodyWeight: true, duration: 45, rest: 60, description: 'Bring your knees toward your chest with control.' },
+    { id: 'plank-rotations', name: 'Plank Rotations', category: 'core', sets: 3, reps: 10, weight: 0, bodyWeight: true, duration: 45, rest: 60, description: 'Rotate from a plank into a side plank, alternating sides.' },
+    { id: 'mountain-climbers', name: 'Mountain Climbers', category: 'conditioning', sets: 3, reps: 20, weight: 0, bodyWeight: true, duration: 45, rest: 60, description: 'Alternate bringing your knees forward from a plank.' },
+    { id: 'burpees', name: 'Burpees', category: 'conditioning', sets: 3, reps: 10, weight: 0, bodyWeight: true, duration: 45, rest: 60, description: 'Move from standing to a plank and back to standing.' },
+    { id: 'wall-sit', name: 'Wall Sit', category: 'conditioning', sets: 3, reps: 1, weight: 0, bodyWeight: true, duration: 45, rest: 60, description: 'Hold a seated position with your back against a wall.' },
+    { id: 'shoulder-taps', name: 'Shoulder Taps', category: 'upper body', sets: 3, reps: 12, weight: 0, bodyWeight: true, duration: 45, rest: 60, description: 'From a plank, alternate tapping each shoulder.' },
+    { id: 'step-ups', name: 'Step-Ups', category: 'legs', sets: 3, reps: 10, weight: 0, bodyWeight: true, duration: 45, rest: 60, description: 'Step onto a stable platform and return with control.' }
 ];
 
 function getWorkoutExerciseCatalog() {
@@ -1535,11 +1578,14 @@ function getWorkoutExerciseCatalog() {
     } catch (error) {
         localStorage.removeItem('triviaWorkoutExerciseOverrides');
     }
-    return workoutExerciseCatalog.map(exercise => ({
-        ...exercise,
-        ...(overrides[exercise.id] || {}),
-        id: exercise.id
-    }));
+    return workoutExerciseCatalog.map(exercise => {
+        const override = overrides[exercise.id] || {};
+        const result = { ...exercise, ...override, id: exercise.id };
+        if (exercise.bodyWeight && override.bodyWeight === undefined && override.weight !== undefined) {
+            result.bodyWeight = Number(override.weight) === 0;
+        }
+        return result;
+    });
 }
 
 const workoutAchievementTemplates = {
@@ -1555,6 +1601,7 @@ const workoutState = {
     currentWeekStart: getMonday(new Date()),
     selectedDayIndex: 0,
     activeFilter: 'all',
+    exerciseTypeFilter: 'all',
     editingExerciseId: null,
     editingExerciseMode: 'new',
     timerInterval: null,
@@ -1570,14 +1617,18 @@ const workoutState = {
     stopwatchStartedAt: 0,
     stopwatchRemaining: 300,
     stopwatchTotal: 300,
+    countdownRunning: false,
+    countdownEndsAt: 0,
     weeks: []
 };
 let workoutCalendarMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
 let workoutCalendarEditingDate = null;
 let workoutMenuStatusTimer = null;
+let workoutDayDragSource = null;
 
 document.addEventListener('visibilitychange', () => {
     if (!document.hidden && currentScreen === 'workoutMenu') updateWorkoutMenuDayStatus();
+    if (!document.hidden && workoutMusicActive && (workoutState.stopwatchRunning || workoutState.countdownRunning)) updateWorkoutClocks();
 });
 
 const WORKOUT_WEEKLY_TEMPLATE_KEY = 'triviaWorkoutWeeklyTemplate';
@@ -1603,7 +1654,10 @@ function cloneWorkoutExercises(exercises, dayDate) {
 function saveWorkoutDayTemplate(day, dayIndex) {
     if (!day) return;
     const today = isoDate(new Date());
-    if (day.date < today) {
+    const programStart = localStorage.getItem('triviaWorkoutProgramStartDate');
+    const isCurrentWeekBeforeProgram = programStart && day.date < programStart
+        && isoDate(getMonday(parseWorkoutDate(day.date))) === isoDate(getMonday(new Date()));
+    if (day.date < today && !isCurrentWeekBeforeProgram) {
         saveWorkoutData();
         return;
     }
@@ -1614,7 +1668,10 @@ function saveWorkoutDayTemplate(day, dayIndex) {
 
     workoutState.weeks.forEach(week => {
         const futureDay = week.days.find(candidate => candidate.date > day.date && candidate.date >= today && getWorkoutDayIndex(candidate.date) === dayIndex);
-        if (futureDay) applyWorkoutTemplateToDay(futureDay, templates[dayIndex]);
+        if (futureDay && !futureDay.manualCompleted && !futureDay.manualMissed
+            && !(futureDay.exercises || []).some(exercise => exercise.completed || Number(exercise.currentSet || 1) > 1)) {
+            applyWorkoutTemplateToDay(futureDay, templates[dayIndex]);
+        }
     });
     saveWorkoutData();
 }
@@ -1637,6 +1694,7 @@ function applyWorkoutTemplateToDay(day, template) {
     day.completed = false;
     day.manualCompleted = false;
     day.manualMissed = false;
+    delete day.untrackedWorkout;
     delete day.savedExercisesForWorkout;
 }
 
@@ -1654,6 +1712,25 @@ function ensureWorkoutWeeklyTemplates() {
         changed = true;
     });
     if (changed) localStorage.setItem(WORKOUT_WEEKLY_TEMPLATE_KEY, JSON.stringify(templates));
+}
+
+function repairLegacyPreStartWorkoutTemplates() {
+    const migrationKey = 'triviaWorkoutPreStartTemplateRepairV1';
+    if (localStorage.getItem(migrationKey)) return;
+    const programStart = localStorage.getItem('triviaWorkoutProgramStartDate');
+    const currentWeekStart = isoDate(getMonday(new Date()));
+    if (programStart && isoDate(getMonday(parseWorkoutDate(programStart))) === currentWeekStart) {
+        const week = workoutState.weeks.find(item => item.weekStart === currentWeekStart);
+        const templates = getWorkoutWeeklyTemplates();
+        (week?.days || []).forEach((day, index) => {
+            if (day.date < programStart && day.type === 'workout'
+                && day.untrackedWorkout === undefined && isUntrackedWorkoutDay(day)
+                && templates[index]?.type === 'rest') {
+                saveWorkoutDayTemplate(day, index);
+            }
+        });
+    }
+    localStorage.setItem(migrationKey, '1');
 }
 
 function getWorkoutCategories() {
@@ -1840,7 +1917,13 @@ function renderSavedWorkoutPlans() {
     select.replaceChildren(new Option('Choose a saved plan', ''));
     plans.forEach(plan => select.add(new Option(plan.name, plan.id)));
     if (plans.some(plan => plan.id === selected)) select.value = selected;
-    switchButton.disabled = plans.length === 0 || !select.value;
+    updateSavedWorkoutPlanControls();
+}
+
+function updateSavedWorkoutPlanControls() {
+    const selected = !!document.getElementById('workout-saved-plans-select')?.value;
+    document.getElementById('workout-switch-plan-btn').disabled = !selected;
+    document.getElementById('workout-delete-plan-btn').hidden = !selected;
 }
 
 function saveNamedWorkoutPlan() {
@@ -1858,7 +1941,7 @@ function saveNamedWorkoutPlan() {
     if (nameInput) nameInput.value = '';
     renderSavedWorkoutPlans();
     document.getElementById('workout-saved-plans-select').value = snapshot.id;
-    document.getElementById('workout-switch-plan-btn').disabled = false;
+    updateSavedWorkoutPlanControls();
     showToast({ icon: '💾', name: 'Workout plan saved', desc: `${name} is ready to switch to later.` });
 }
 
@@ -1877,6 +1960,53 @@ function switchToSavedWorkoutPlan() {
     hydrateWorkoutCategoriesSelect();
     renderWorkoutPlanner();
     showToast({ icon: '📂', name: 'Workout plan switched', desc: `Loaded ${plan.name}.` });
+}
+
+function resetWorkoutStats() {
+    if (!confirm('Reset workout stats and clear the current workout schedule? Your other app progress and saved workout plans will be kept.')) return;
+
+    const savedAchievements = (() => {
+        try {
+            const parsed = JSON.parse(localStorage.getItem('triviaAchievements') || '{}');
+            return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {};
+        } catch (error) {
+            return {};
+        }
+    })();
+    Object.keys(workoutAchievementTemplates).forEach(id => {
+        if (savedAchievements[id]) savedAchievements[id] = { ...savedAchievements[id], unlocked: false };
+    });
+    localStorage.setItem('triviaAchievements', JSON.stringify(savedAchievements));
+
+    try {
+        const customAchievements = JSON.parse(localStorage.getItem(WORKOUT_CUSTOM_ACHIEVEMENTS_KEY) || '[]');
+        if (Array.isArray(customAchievements)) {
+            localStorage.setItem(WORKOUT_CUSTOM_ACHIEVEMENTS_KEY, JSON.stringify(
+                customAchievements.map(achievement => ({ ...achievement, unlocked: false }))
+            ));
+        }
+    } catch (error) {
+        // Keep malformed custom achievement data untouched rather than affecting other app progress.
+    }
+
+    const today = isoDate(new Date());
+    const restDayTemplates = Object.fromEntries(Array.from({ length: 7 }, (_, index) => [index, { type: 'rest', exercises: [] }]));
+    localStorage.setItem(WORKOUT_WEEKLY_TEMPLATE_KEY, JSON.stringify(restDayTemplates));
+    localStorage.setItem('triviaWorkoutProgramStartDate', today);
+    localStorage.removeItem('triviaWorkoutProgram');
+    localStorage.removeItem('triviaWorkoutMetricBaseline');
+    sessionStorage.setItem('triviaResetToWorkoutDashboard', 'true');
+    window.location.reload();
+}
+
+function deleteSavedWorkoutPlan() {
+    const planId = document.getElementById('workout-saved-plans-select')?.value;
+    const plans = getSavedWorkoutPlans();
+    const plan = plans.find(item => item.id === planId);
+    if (!plan || !confirm(`Delete the saved plan “${plan.name}”? Your current workout program will not be changed.`)) return;
+    localStorage.setItem('triviaWorkoutSavedPlans', JSON.stringify(plans.filter(item => item.id !== planId)));
+    renderSavedWorkoutPlans();
+    showToast({ icon: '🗑️', name: 'Plan deleted', desc: `${plan.name} was removed from saved plans.` });
 }
 
 function resetActiveWorkoutProgram() {
@@ -1961,12 +2091,28 @@ function updateWorkoutMenuDayStatus() {
     }, midnight - now + 50);
 }
 
+function estimateWorkoutMinutes(exercises) {
+    const seconds = exercises.reduce((total, exercise) => {
+        const sets = Math.max(1, Number(exercise.sets) || 1);
+        const duration = Math.max(0, Number(exercise.duration) || 45);
+        const rest = Math.max(0, Number(exercise.rest) || 60);
+        return total + sets * duration + (sets - 1) * rest;
+    }, 0);
+    return Math.ceil(seconds / 300) * 5;
+}
+
 function renderWorkoutNow() {
     const today = new Date();
     const day = getTodayWorkoutDay(today);
     document.getElementById('workout-now-date').textContent = today.toLocaleDateString(undefined, {
         weekday: 'long', month: 'long', day: 'numeric', year: 'numeric'
     });
+    const estimate = document.getElementById('workout-now-estimate');
+    estimate.hidden = day?.type !== 'workout' || !day.exercises?.length;
+    if (!estimate.hidden) {
+        estimate.textContent = `Estimated workout time: ${estimateWorkoutMinutes(day.exercises)} min`;
+        estimate.title = 'Includes set time and rest between sets, rounded up to 5 minutes.';
+    }
     const container = document.getElementById('workout-now-list');
     container.replaceChildren();
     if (!day || day.type === null) {
@@ -1990,7 +2136,7 @@ function renderWorkoutNow() {
             details.textContent = [
                 `${exercise.sets} sets`,
                 exercise.repsTillFailure ? "'Till Failure" : `${exercise.reps} reps`,
-                exercise.bodyWeight ? 'Body Weight' : `${exercise.weight || 0} kg`,
+                isBodyweightExercise(exercise) ? 'Body Weight' : `${exercise.weight || 0} kg`,
                 `${exercise.rest || 60}s rest`
             ].join(' • ');
             const controls = document.createElement('div');
@@ -2063,10 +2209,12 @@ function setSelectedWorkoutDayType(type) {
         day.completed = false;
         day.manualCompleted = false;
         day.manualMissed = false;
+        delete day.untrackedWorkout;
     } else {
         day.type = 'workout';
         day.manualCompleted = false;
         day.manualMissed = false;
+        day.untrackedWorkout = day.date < isoDate(new Date());
         const templates = getWorkoutWeeklyTemplates();
         const exercisesToRestore = day.savedExercisesForWorkout?.length
             ? day.savedExercisesForWorkout
@@ -2092,9 +2240,25 @@ function setSelectedWorkoutDay(index) {
     renderWorkoutPlanner();
 }
 
+function isBodyweightExercise(exercise) {
+    return typeof exercise.bodyWeight === 'boolean'
+        ? exercise.bodyWeight
+        : Number(exercise.weight || 0) === 0;
+}
+
+function matchesWorkoutExerciseType(exercise) {
+    if (workoutState.exerciseTypeFilter === 'all') return true;
+    return workoutState.exerciseTypeFilter === (isBodyweightExercise(exercise) ? 'bodyweight' : 'weighted');
+}
+
 function addCategoryFilterButtons() {
     const custom = JSON.parse(localStorage.getItem('triviaWorkoutCustomExercises') || '[]');
-    const filters = ['all', ...Array.from(new Set([...getWorkoutExerciseCatalog().map(ex => ex.category), ...custom.map(ex => ex.category), ...getWorkoutCategories()]))];
+    const exercises = [...getWorkoutExerciseCatalog(), ...custom];
+    const allCategories = Array.from(new Set([...exercises.map(ex => ex.category), ...getWorkoutCategories()]));
+    const categories = workoutState.exerciseTypeFilter === 'all' ? allCategories
+        : allCategories.filter(category => exercises.some(exercise => exercise.category === category && matchesWorkoutExerciseType(exercise)));
+    const filters = ['all', ...categories];
+    if (!filters.includes(workoutState.activeFilter)) workoutState.activeFilter = 'all';
     const container = document.getElementById('workout-category-filters');
     if (!container) return;
 
@@ -2104,6 +2268,8 @@ function addCategoryFilterButtons() {
         chipWrap.className = 'filter-chip-wrap';
         const btn = document.createElement('button');
         btn.className = `filter-chip ${cat === workoutState.activeFilter ? 'active' : ''}`;
+        btn.type = 'button';
+        btn.setAttribute('aria-pressed', String(cat === workoutState.activeFilter));
         btn.textContent = cat === 'all' ? 'All' : formatWorkoutCategoryLabel(cat);
         btn.addEventListener('click', () => {
             workoutState.activeFilter = cat;
@@ -2167,14 +2333,15 @@ function renderWorkoutExerciseList() {
     if (!list) return;
 
     const custom = JSON.parse(localStorage.getItem('triviaWorkoutCustomExercises') || '[]');
-    const matchesFilter = exercise => workoutState.activeFilter === 'all' || exercise.category === workoutState.activeFilter;
+    const matchesFilter = exercise => matchesWorkoutExerciseType(exercise)
+        && (workoutState.activeFilter === 'all' || exercise.category === workoutState.activeFilter);
     const defaults = getWorkoutExerciseCatalog().filter(matchesFilter);
     const customExercises = custom.filter(matchesFilter);
     list.innerHTML = '';
     const appendExercise = ex => {
         const item = document.createElement('div');
         item.className = 'workout-exercise-item';
-        const weightLabel = Number(ex.weight || 0) > 0 && !ex.bodyWeight ? `${ex.weight}kg` : '';
+        const weightLabel = isBodyweightExercise(ex) ? 'Body Weight' : `${ex.weight || 0}kg`;
         const exerciseMeta = [
             `${ex.sets} sets`,
             ex.repsTillFailure ? "'Till Failure" : `${ex.reps} reps`,
@@ -2209,6 +2376,12 @@ function renderWorkoutExerciseList() {
         divider.innerHTML = '<span>Custom Exercises</span>';
         list.appendChild(divider);
         customExercises.forEach(appendExercise);
+    }
+    if (!defaults.length && !customExercises.length) {
+        const empty = document.createElement('p');
+        empty.className = 'workout-exercise-empty';
+        empty.textContent = 'No exercises match these filters.';
+        list.appendChild(empty);
     }
 }
 
@@ -2313,7 +2486,7 @@ function populateExerciseEditor(exercise, isDayExercise = false) {
     setExerciseOptionState(
         document.getElementById('workout-exercise-bodyweight-btn'),
         weight,
-        !!exercise.bodyWeight
+        isBodyweightExercise(exercise)
     );
     openExerciseEditor(isDayExercise ? 'Edit Today’s Exercise' : 'Edit Exercise in List', isDayExercise
         ? 'These changes apply to the selected day only.'
@@ -2549,6 +2722,7 @@ function addExerciseToSelectedDay(exercise) {
 
     if (day.type !== 'workout') {
         day.type = 'workout';
+        day.untrackedWorkout = day.date < isoDate(new Date());
     }
 
     const nextId = `${exercise.id}-${Date.now()}`;
@@ -2584,9 +2758,11 @@ function exportWorkoutProgram() {
         version: 1,
         exportedAt: new Date().toISOString(),
         currentWeekStart: workoutState.currentWeekStart,
+        programStartDate: getWorkoutProgramStartDate(),
         weeklyTemplates: getWorkoutWeeklyTemplates(),
         categories: getWorkoutCategories(),
         customExercises: JSON.parse(localStorage.getItem('triviaWorkoutCustomExercises') || '[]'),
+        exerciseOverrides: JSON.parse(localStorage.getItem('triviaWorkoutExerciseOverrides') || '{}'),
         weeks: workoutState.weeks
     };
     const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
@@ -2600,18 +2776,31 @@ function exportWorkoutProgram() {
 }
 
 function isValidWorkoutImport(payload) {
+    const isDate = value => typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)
+        && isoDate(parseWorkoutDate(value)) === value;
+    const validExercises = exercises => Array.isArray(exercises) && exercises.every(exercise =>
+        exercise && typeof exercise === 'object' && typeof exercise.name === 'string');
+    const validTemplate = template => template && typeof template === 'object'
+        && (template.type === 'rest' || template.type === 'workout' || template.type === null)
+        && validExercises(template.exercises);
     return !!payload
         && payload.format === 'bianka-workout-program'
+        && (payload.programStartDate === undefined || isDate(payload.programStartDate))
+        && (payload.weeklyTemplates === undefined || (payload.weeklyTemplates && typeof payload.weeklyTemplates === 'object'
+            && !Array.isArray(payload.weeklyTemplates) && Object.values(payload.weeklyTemplates).every(validTemplate)))
+        && (payload.categories === undefined || (Array.isArray(payload.categories) && payload.categories.every(category => typeof category === 'string')))
+        && (payload.customExercises === undefined || validExercises(payload.customExercises))
+        && (payload.exerciseOverrides === undefined || (payload.exerciseOverrides && typeof payload.exerciseOverrides === 'object' && !Array.isArray(payload.exerciseOverrides)))
         && Array.isArray(payload.weeks)
         && payload.weeks.length > 0
         && payload.weeks.every(week => week
-            && typeof week.weekStart === 'string'
+            && isDate(week.weekStart)
             && Array.isArray(week.days)
             && week.days.length === 7
             && week.days.every(day => day
-                && typeof day.date === 'string'
-                && (day.type === 'rest' || day.type === 'workout')
-                && Array.isArray(day.exercises)));
+                && isDate(day.date)
+                && (day.type === 'rest' || day.type === 'workout' || day.type === null)
+                && validExercises(day.exercises)));
 }
 
 function importWorkoutProgramFile(file) {
@@ -2622,12 +2811,30 @@ function importWorkoutProgramFile(file) {
             if (!isValidWorkoutImport(payload)) throw new Error('This file is not a valid workout program export.');
             if (!confirm('Import this workout program and replace your current workout schedule?')) return;
 
+            stopWorkoutTimer();
+            workoutState.activeDayDate = null;
+            workoutState.activeExerciseIndex = null;
+            workoutState.timerMode = 'idle';
+            workoutState.timerRemaining = 0;
             workoutState.weeks = payload.weeks;
-            workoutState.currentWeekStart = payload.currentWeekStart || payload.weeks[0].weekStart;
-            workoutState.selectedDayIndex = (new Date().getDay() + 6) % 7;
-            localStorage.setItem(WORKOUT_WEEKLY_TEMPLATE_KEY, JSON.stringify(payload.weeklyTemplates || {}));
+            const templates = { ...(payload.weeklyTemplates || {}) };
+            const latestWeeks = [...payload.weeks].sort((a, b) => b.weekStart.localeCompare(a.weekStart));
+            for (let index = 0; index < 7; index++) {
+                if (!templates[index]) {
+                    const day = latestWeeks.map(week => week.days[index]).find(item => item.type !== null);
+                    templates[index] = day ? createWorkoutDayTemplate(day) : { type: 'rest', exercises: [] };
+                }
+            }
+            localStorage.setItem(WORKOUT_WEEKLY_TEMPLATE_KEY, JSON.stringify(templates));
             localStorage.setItem('triviaWorkoutCategories', JSON.stringify(payload.categories || getWorkoutCategories()));
             localStorage.setItem('triviaWorkoutCustomExercises', JSON.stringify(payload.customExercises || []));
+            if (payload.exerciseOverrides !== undefined) localStorage.setItem('triviaWorkoutExerciseOverrides', JSON.stringify(payload.exerciseOverrides));
+            if (payload.programStartDate) localStorage.setItem('triviaWorkoutProgramStartDate', payload.programStartDate);
+            else localStorage.removeItem('triviaWorkoutProgramStartDate');
+            const today = new Date();
+            workoutState.currentWeekStart = isoDate(getMonday(today));
+            workoutState.selectedDayIndex = (today.getDay() + 6) % 7;
+            getTodayWorkoutDay(today);
             saveWorkoutData();
             hydrateWorkoutCategoriesSelect();
             renderWorkoutPlanner();
@@ -2639,6 +2846,58 @@ function importWorkoutProgramFile(file) {
     reader.readAsText(file);
 }
 
+function hasWorkoutDayProgress(day) {
+    return !!(day.manualCompleted || day.manualMissed || day.completed
+        || (day.exercises || []).some(exercise => exercise.completed || Number(exercise.currentSet || 1) > 1));
+}
+
+function canMoveWorkoutDayDate(day) {
+    if (day.date >= isoDate(new Date())) return true;
+    if (hasWorkoutDayProgress(day)) return false;
+    const programStart = localStorage.getItem('triviaWorkoutProgramStartDate');
+    return isUntrackedWorkoutDay(day) || day.type === null || !!(programStart && day.date < programStart);
+}
+
+function moveWorkoutDay(fromIndex, toIndex) {
+    const week = getWorkoutWeekForCurrentView();
+    const source = week.days[fromIndex];
+    const target = week.days[toIndex];
+    if (!source || !target || fromIndex === toIndex || source.type !== 'workout') return false;
+    if (!canMoveWorkoutDayDate(source) || !canMoveWorkoutDayDate(target)
+        || hasWorkoutDayProgress(source) || hasWorkoutDayProgress(target)
+        || [source.date, target.date].includes(workoutState.activeDayDate)) {
+        alert('Cannot move a workout to or from a recorded, missed, or active day. Choose an unrecorded day instead.');
+        return false;
+    }
+    if (target.type === 'workout' && !confirm(`Replace the ${target.dayLabel} workout with the ${source.dayLabel} workout? This also changes the recurring schedule.`)) return false;
+
+    const movedTemplate = createWorkoutDayTemplate(source);
+    applyWorkoutTemplateToDay(target, movedTemplate);
+    if (target.date < isoDate(new Date())) target.untrackedWorkout = true;
+    applyWorkoutTemplateToDay(source, { type: 'rest', exercises: [] });
+
+    const templates = getWorkoutWeeklyTemplates();
+    templates[fromIndex] = { type: 'rest', exercises: [] };
+    templates[toIndex] = movedTemplate;
+    localStorage.setItem(WORKOUT_WEEKLY_TEMPLATE_KEY, JSON.stringify(templates));
+    const currentWeekStart = week.weekStart;
+    const today = isoDate(new Date());
+    workoutState.weeks.forEach(otherWeek => {
+        if (otherWeek.weekStart <= currentWeekStart) return;
+        [fromIndex, toIndex].forEach(index => {
+            const day = otherWeek.days[index];
+            if (day && day.date >= today && !hasWorkoutDayProgress(day) && day.date !== workoutState.activeDayDate) {
+                applyWorkoutTemplateToDay(day, templates[index]);
+            }
+        });
+    });
+    workoutState.selectedDayIndex = toIndex;
+    saveWorkoutData();
+    renderWorkoutPlanner();
+    showToast({ icon: '✅', name: 'Workout moved', desc: `${source.dayLabel} is now a rest day; ${target.dayLabel} is a workout day.` });
+    return true;
+}
+
 function renderWorkoutDays() {
     const week = getWorkoutWeekForCurrentView();
     const container = document.getElementById('workout-days-row');
@@ -2648,16 +2907,45 @@ function renderWorkoutDays() {
     container.innerHTML = '';
     week.days.forEach((day, index) => {
         if (day.type === 'workout') day.completed = isWorkoutDayCompleted(day);
-        const missed = day.type === 'workout' && (day.date < today || day.manualMissed) && !day.completed;
+        const untracked = isUntrackedWorkoutDay(day);
+        const missed = day.type === 'workout' && (day.date < today || day.manualMissed) && !day.completed && !untracked;
         const btn = document.createElement('button');
         btn.className = `workout-day-pill ${index === workoutState.selectedDayIndex ? 'active' : ''} ${day.completed ? 'completed' : ''} ${day.type === 'workout' ? 'workout-day' : ''} ${day.type === 'rest' ? 'rest-day' : ''} ${day.type === null ? 'null-day' : ''} ${missed ? 'missed-day' : ''}`;
         btn.type = 'button';
+        btn.draggable = day.type === 'workout';
         btn.innerHTML = `
             <span class="day-letter">${day.dayLabel}</span>
             <span class="day-number">${parseWorkoutDate(day.date).getDate()}</span>
-            <span class="day-status">${day.type === 'rest' ? 'Rest' : day.type === null ? '—' : missed ? '✕' : day.exercises.filter(ex => ex.completed).length + '/' + day.exercises.length || '0/0'}</span>
+            <span class="day-status">${day.type === 'rest' ? 'Rest' : day.type === null || untracked ? '—' : missed ? '✕' : day.exercises.filter(ex => ex.completed).length + '/' + day.exercises.length || '0/0'}</span>
         `;
         btn.addEventListener('click', () => setSelectedWorkoutDay(index));
+        btn.addEventListener('dragstart', event => {
+            if (day.type !== 'workout') return;
+            workoutDayDragSource = index;
+            event.dataTransfer.effectAllowed = 'move';
+            event.dataTransfer.setData('text/plain', day.date);
+            btn.classList.add('day-dragging');
+        });
+        btn.addEventListener('dragover', event => {
+            if (workoutDayDragSource === null || workoutDayDragSource === index) return;
+            event.preventDefault();
+            event.dataTransfer.dropEffect = 'move';
+            btn.classList.add('day-drop-target');
+        });
+        btn.addEventListener('dragleave', () => btn.classList.remove('day-drop-target'));
+        btn.addEventListener('drop', event => {
+            if (workoutDayDragSource === null || workoutDayDragSource === index) return;
+            event.preventDefault();
+            const sourceIndex = workoutDayDragSource;
+            workoutDayDragSource = null;
+            btn.classList.remove('day-drop-target');
+            moveWorkoutDay(sourceIndex, index);
+        });
+        btn.addEventListener('dragend', () => {
+            workoutDayDragSource = null;
+            btn.classList.remove('day-dragging');
+            container.querySelectorAll('.day-drop-target').forEach(item => item.classList.remove('day-drop-target'));
+        });
         container.appendChild(btn);
     });
 }
@@ -3053,6 +3341,15 @@ function isWorkoutDayCompleted(day) {
     return threshold > 0 && getCompletedExerciseCount(day) >= threshold;
 }
 
+function isUntrackedWorkoutDay(day) {
+    if (!day || day.type !== 'workout' || day.manualMissed || day.manualCompleted || isWorkoutDayCompleted(day)) return false;
+    if (typeof day.untrackedWorkout === 'boolean') return day.untrackedWorkout;
+    const programStart = localStorage.getItem('triviaWorkoutProgramStartDate');
+    const beforeProgram = programStart && day.date < programStart
+        && !(day.exercises || []).some(exercise => exercise.completed || Number(exercise.currentSet || 1) > 1);
+    return !!beforeProgram;
+}
+
 function getWorkoutProgramStartDate() {
     const stored = localStorage.getItem('triviaWorkoutProgramStartDate');
     if (stored && /^\d{4}-\d{2}-\d{2}$/.test(stored)) return stored;
@@ -3081,11 +3378,11 @@ function calculateWorkoutStreak() {
         const scheduledType = day ? day.type : templates[getWorkoutDayIndex(dateKey)]?.type;
 
         if (scheduledType === 'rest') {
-            streak += 1;
+            // Rest days preserve a streak but never start or increase it.
         } else if (scheduledType === 'workout') {
             if (isWorkoutDayCompleted(day || { type: 'workout', exercises: [] })) {
                 streak += 1;
-            } else if (dateKey < today || day?.manualMissed) {
+            } else if ((dateKey < today || day?.manualMissed) && !isUntrackedWorkoutDay(day)) {
                 streak = 0;
             }
         } else {
@@ -3152,7 +3449,7 @@ function renderWorkoutDayDetail() {
             <div class="meta-line">
                 <span>${formatWorkoutCategoryLabel(exercise.category)}</span>
                 <span class="meta-separator" aria-hidden="true"></span>
-                <span>${exercise.bodyWeight ? 'Body Weight' : `${exercise.weight || 0}kg`}</span>
+                <span>${isBodyweightExercise(exercise) ? 'Body Weight' : `${exercise.weight || 0}kg`}</span>
                 <span class="meta-separator" aria-hidden="true"></span>
                 <span>${exercise.sets} sets</span>
                 <span class="meta-separator" aria-hidden="true"></span>
@@ -3250,6 +3547,7 @@ function startWorkoutExercise(day, exerciseIndex) {
     if (!day || day.type !== 'workout') return;
     const exercise = day.exercises[exerciseIndex];
     if (!exercise || exercise.completed) return;
+    day.untrackedWorkout = false;
 
     const setIndex = Number(exercise.currentSet || 1);
     const totalSets = Number(exercise.sets || 1);
@@ -3325,6 +3623,7 @@ function completeWorkoutExercise(day, exerciseIndex) {
 
     if (exercise.completed) {
         if (!confirm(`Undo completion of “${exercise.name}”? Its reps, sets, and weight contribution will be removed from your stats.`)) return;
+        day.untrackedWorkout = false;
         exercise.completed = false;
         exercise.currentSet = 1;
         day.manualCompleted = false;
@@ -3344,6 +3643,7 @@ function completeWorkoutExercise(day, exerciseIndex) {
         workoutState.timerRemaining = 0;
     }
 
+    day.untrackedWorkout = false;
     exercise.completed = true;
     exercise.currentSet = Number(exercise.sets || 1);
     day.manualCompleted = false;
@@ -3382,7 +3682,7 @@ function formatStopwatchTime(totalMilliseconds) {
 }
 
 function formatCountdownStopwatchTime(totalSeconds) {
-    const seconds = Math.max(0, Math.floor(totalSeconds));
+    const seconds = Math.max(0, Math.ceil(totalSeconds));
     return `${String(Math.floor(seconds / 60)).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`;
 }
 
@@ -3395,7 +3695,11 @@ function syncCountdownDurationControls(resetTimer = true) {
     let seconds = Math.max(0, Math.min(59, Math.floor(Number(secondsInput.value || 0))));
     minutesInput.value = String(minutes);
     secondsInput.value = String(seconds);
-    if (resetTimer && !workoutState.stopwatchRunning && workoutState.stopwatchMode === 'countdown') resetStopwatch();
+    if (resetTimer && !workoutState.countdownRunning) {
+        workoutState.stopwatchTotal = minutes * 60 + seconds;
+        workoutState.stopwatchRemaining = workoutState.stopwatchTotal;
+        renderStopwatch();
+    }
 }
 
 function renderStopwatch() {
@@ -3412,7 +3716,8 @@ function renderStopwatch() {
     const preferredFontSize = Math.min(56, Math.max(22, window.innerWidth * (isCountdown ? 0.07 : 0.08)));
     const fittedFontSize = Math.min(preferredFontSize, innerWidth / (formattedTime.length * 0.62));
     display.style.fontSize = `${Math.max(17, fittedFontSize)}px`;
-    startButton.textContent = workoutState.stopwatchRunning ? 'Pause' : (shownTime > 0 && (isCountdown ? shownTime < workoutState.stopwatchTotal : shownTime > 0) ? 'Resume' : 'Start');
+    const running = isCountdown ? workoutState.countdownRunning : workoutState.stopwatchRunning;
+    startButton.textContent = running ? 'Pause' : (shownTime > 0 && (isCountdown ? shownTime < workoutState.stopwatchTotal : shownTime > 0) ? 'Resume' : 'Start');
     const modeSwitch = document.querySelector('.workout-stopwatch-mode-switch');
     modeSwitch?.classList.toggle('countdown-mode', isCountdown);
     const stopwatchModeButton = document.getElementById('workout-mode-stopwatch-btn');
@@ -3422,6 +3727,7 @@ function renderStopwatch() {
     stopwatchModeButton?.setAttribute('aria-pressed', String(!isCountdown));
     countdownModeButton?.setAttribute('aria-pressed', String(isCountdown));
     if (durationControl) durationControl.hidden = !isCountdown;
+    durationControl?.querySelectorAll('input, button').forEach(control => { control.disabled = workoutState.countdownRunning; });
     const progress = isCountdown && workoutState.stopwatchTotal > 0
         ? (workoutState.stopwatchTotal - workoutState.stopwatchRemaining) / workoutState.stopwatchTotal
         : 0;
@@ -3429,70 +3735,82 @@ function renderStopwatch() {
     face.classList.toggle('countdown-mode', isCountdown);
 }
 
-function startStopwatch() {
-    if (workoutState.stopwatchRunning) {
-        stopStopwatch();
-        return;
-    }
-    if (workoutState.stopwatchMode === 'countdown' && workoutState.stopwatchRemaining <= 0) {
-        resetStopwatch();
-    }
-    if (workoutState.stopwatchMode === 'countdown' && workoutState.stopwatchRemaining <= 0) {
-        showToast({ icon: '⚠️', name: 'Set a timer duration', desc: 'Enter at least one second to start the countdown.' });
-        return;
-    }
-    workoutState.stopwatchRunning = true;
-    if (workoutState.stopwatchMode === 'stopwatch') {
-        workoutState.stopwatchStartedAt = performance.now() - workoutState.stopwatchElapsed;
-    }
-    let previousTick = performance.now();
-    workoutState.stopwatchInterval = setInterval(() => {
-        const now = performance.now();
-        if (workoutState.stopwatchMode === 'countdown') {
-            workoutState.stopwatchRemaining = Math.max(0, workoutState.stopwatchRemaining - (now - previousTick) / 1000);
-            previousTick = now;
-            if (workoutState.stopwatchRemaining === 0) {
-                stopStopwatch();
-                showToast({ icon: '⏰', name: 'Timer complete', desc: 'Your countdown has finished.' });
-                return;
+function updateWorkoutClocks(showCompletion = true) {
+    const now = Date.now();
+    if (workoutState.stopwatchRunning) workoutState.stopwatchElapsed = Math.max(0, now - workoutState.stopwatchStartedAt);
+    if (workoutState.countdownRunning) {
+        workoutState.stopwatchRemaining = Math.max(0, (workoutState.countdownEndsAt - now) / 1000);
+        if (workoutState.stopwatchRemaining === 0) {
+            workoutState.countdownRunning = false;
+            if (showCompletion) {
+                document.getElementById('workout-timer-done-overlay').hidden = false;
+                syncWorkoutOverlayScrollLock();
+                playPopSound();
+                document.getElementById('workout-timer-done-close').focus();
             }
-        } else {
-            workoutState.stopwatchElapsed = Math.max(0, now - workoutState.stopwatchStartedAt);
         }
-        renderStopwatch();
-    }, workoutState.stopwatchMode === 'stopwatch' ? 16 : 50);
+    }
+    if (!workoutState.stopwatchRunning && !workoutState.countdownRunning && workoutState.stopwatchInterval) {
+        clearInterval(workoutState.stopwatchInterval);
+        workoutState.stopwatchInterval = null;
+    }
     renderStopwatch();
 }
 
-function stopStopwatch() {
-    if (workoutState.stopwatchRunning && workoutState.stopwatchMode === 'stopwatch') {
-        workoutState.stopwatchElapsed = Math.max(0, performance.now() - workoutState.stopwatchStartedAt);
+function startStopwatch() {
+    updateWorkoutClocks();
+    if (workoutState.stopwatchMode === 'countdown') {
+        if (workoutState.countdownRunning) {
+            workoutState.countdownRunning = false;
+        } else {
+            if (workoutState.stopwatchRemaining <= 0) syncCountdownDurationControls();
+            if (workoutState.stopwatchRemaining <= 0) {
+                showToast({ icon: '⚠️', name: 'Set a timer duration', desc: 'Enter at least one second to start the countdown.' });
+                return;
+            }
+            workoutState.countdownEndsAt = Date.now() + workoutState.stopwatchRemaining * 1000;
+            workoutState.countdownRunning = true;
+        }
+    } else if (workoutState.stopwatchRunning) {
+        workoutState.stopwatchRunning = false;
+    } else {
+        workoutState.stopwatchStartedAt = Date.now() - workoutState.stopwatchElapsed;
+        workoutState.stopwatchRunning = true;
     }
+    if ((workoutState.stopwatchRunning || workoutState.countdownRunning) && !workoutState.stopwatchInterval) {
+        workoutState.stopwatchInterval = setInterval(updateWorkoutClocks, 16);
+    }
+    updateWorkoutClocks();
+}
+
+function pauseWorkoutClocks() {
+    updateWorkoutClocks(false);
+    workoutState.stopwatchRunning = false;
+    workoutState.countdownRunning = false;
     if (workoutState.stopwatchInterval) clearInterval(workoutState.stopwatchInterval);
     workoutState.stopwatchInterval = null;
-    workoutState.stopwatchRunning = false;
+    document.getElementById('workout-timer-done-overlay').hidden = true;
+    document.getElementById('workout-timer-overlay').hidden = true;
+    syncWorkoutOverlayScrollLock();
     renderStopwatch();
 }
 
 function resetStopwatch() {
-    stopStopwatch();
-    workoutState.stopwatchElapsed = 0;
-    const durationMinutes = Number(document.getElementById('workout-timer-duration-input')?.value || 0);
-    const durationSeconds = Number(document.getElementById('workout-timer-duration-seconds')?.value || 0);
-    workoutState.stopwatchTotal = Math.max(0, Math.floor(durationMinutes * 60 + durationSeconds));
-    workoutState.stopwatchRemaining = workoutState.stopwatchTotal;
-    renderStopwatch();
+    updateWorkoutClocks();
+    if (workoutState.stopwatchMode === 'countdown') {
+        workoutState.countdownRunning = false;
+        syncCountdownDurationControls();
+    } else {
+        workoutState.stopwatchRunning = false;
+        workoutState.stopwatchElapsed = 0;
+    }
+    updateWorkoutClocks();
 }
 
 function setWorkoutTimerMode(mode) {
     if (mode !== 'stopwatch' && mode !== 'countdown') return;
-    stopStopwatch();
+    updateWorkoutClocks();
     workoutState.stopwatchMode = mode;
-    workoutState.stopwatchElapsed = 0;
-    const durationMinutes = Number(document.getElementById('workout-timer-duration-input')?.value || 0);
-    const durationSeconds = Number(document.getElementById('workout-timer-duration-seconds')?.value || 0);
-    workoutState.stopwatchTotal = Math.max(0, Math.floor(durationMinutes * 60 + durationSeconds));
-    workoutState.stopwatchRemaining = workoutState.stopwatchTotal;
     renderStopwatch();
 }
 
@@ -3553,13 +3871,14 @@ function renderWorkoutCalendar() {
         const isPast = iso < isoDate(new Date());
         const isRest = matchingDay?.type === 'rest';
         const isWorkout = matchingDay?.type === 'workout';
-        const isMissed = isWorkout && (isPast || matchingDay.manualMissed) && !matchingDay.completed;
+        const isUntracked = isUntrackedWorkoutDay(matchingDay);
+        const isMissed = isWorkout && (isPast || matchingDay.manualMissed) && !matchingDay.completed && !isUntracked;
         const isDone = isWorkout && matchingDay.completed;
         const isNullDay = !matchingDay || matchingDay.type === null;
-        const statusEmoji = isMissed ? '✕' : isRest ? '💤' : isDone ? '✓' : isWorkout ? '💪' : '·';
+        const statusEmoji = isMissed ? '✕' : isRest ? '💤' : isDone ? '✓' : isUntracked ? '—' : isWorkout ? '💪' : '·';
         cell.className = `calendar-cell ${isNullDay ? 'null-day' : ''} ${isDone ? 'done' : ''} ${isWorkout ? 'workout-day' : ''} ${isRest ? 'rest-day' : ''} ${isMissed ? 'missed' : ''} ${matchingDay?.date === getCurrentWorkoutDay().date ? 'active' : ''}`;
         cell.innerHTML = `<span class="calendar-date">${day}</span><span class="calendar-emoji">${statusEmoji}</span>`;
-        cell.setAttribute('aria-label', `${date.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}. ${isMissed ? 'Missed workout' : isRest ? 'Rest day' : isDone ? 'Completed workout' : isWorkout ? 'Scheduled workout' : 'No workout status'}. Click to edit status.`);
+        cell.setAttribute('aria-label', `${date.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}. ${isMissed ? 'Missed workout' : isRest ? 'Rest day' : isDone ? 'Completed workout' : isUntracked ? 'Workout day, no recorded status' : isWorkout ? 'Scheduled workout' : 'No workout status'}. Click to edit status.`);
         cell.addEventListener('click', () => {
             openWorkoutCalendarStatusEditor(date);
         });
@@ -3590,7 +3909,8 @@ function syncWorkoutOverlayScrollLock() {
         'workout-calendar-status-overlay',
         'workout-exercise-modal',
         'workout-timer-overlay',
-        'workout-weight-entry-overlay'
+        'workout-weight-entry-overlay',
+        'workout-timer-done-overlay'
     ];
     const hasOpenModal = modalIds.some(id => {
         const modal = document.getElementById(id);
@@ -3622,6 +3942,7 @@ function applyWorkoutCalendarStatus(status) {
     if (dayIndex < 0) return;
 
     const day = week.days[dayIndex];
+    delete day.untrackedWorkout;
     if (status === 'rest') {
         if (day.type === 'workout') day.savedExercisesForWorkout = (day.exercises || []).map(exercise => ({ ...exercise }));
         day.type = 'rest';
@@ -3654,6 +3975,7 @@ function applyWorkoutCalendarStatus(status) {
 
     closeWorkoutCalendarStatusEditor();
     updateWorkoutAchievements();
+    renderWorkoutDays();
     renderWorkoutMetrics();
     renderWorkoutCalendar();
     renderWorkoutAchievements();
@@ -3915,6 +4237,7 @@ function syncWorkoutMonthNavigation(direction) {
 function initializeWorkoutProgram() {
     ensureWorkoutState();
     ensureWorkoutWeeklyTemplates();
+    repairLegacyPreStartWorkoutTemplates();
     const deletedAchievementIds = getDeletedAchievementIds();
     const editor = document.getElementById('workout-exercise-editor');
     const editorModalContent = document.getElementById('workout-exercise-modal-content');
@@ -3941,6 +4264,20 @@ function initializeWorkoutProgram() {
     renderWorkoutPlanner();
 
     initializeWorkoutExerciseListResize();
+
+    document.querySelectorAll('[data-exercise-type]').forEach(button => {
+        button.addEventListener('click', () => {
+            workoutState.exerciseTypeFilter = workoutState.exerciseTypeFilter === button.dataset.exerciseType
+                ? 'all' : button.dataset.exerciseType;
+            document.querySelectorAll('[data-exercise-type]').forEach(filter => {
+                const active = filter.dataset.exerciseType === workoutState.exerciseTypeFilter;
+                filter.classList.toggle('active', active);
+                filter.setAttribute('aria-pressed', String(active));
+            });
+            addCategoryFilterButtons();
+            renderWorkoutExerciseList();
+        });
+    });
 
     document.getElementById('workout-prev-week-btn')?.addEventListener('click', () => {
         syncWorkoutWeekNavigation(-1);
@@ -4023,16 +4360,15 @@ function initializeWorkoutProgram() {
     });
     document.getElementById('workout-save-plan-btn')?.addEventListener('click', saveNamedWorkoutPlan);
     document.getElementById('workout-switch-plan-btn')?.addEventListener('click', switchToSavedWorkoutPlan);
-    document.getElementById('workout-saved-plans-select')?.addEventListener('change', () => {
-        document.getElementById('workout-switch-plan-btn').disabled = !document.getElementById('workout-saved-plans-select').value;
-    });
+    document.getElementById('workout-delete-plan-btn')?.addEventListener('click', deleteSavedWorkoutPlan);
+    document.getElementById('workout-saved-plans-select')?.addEventListener('change', updateSavedWorkoutPlanControls);
     renderSavedWorkoutPlans();
 
     document.getElementById('workout-timer-open-btn')?.addEventListener('click', () => {
         const timerOverlay = document.getElementById('workout-timer-overlay');
         timerOverlay.hidden = false;
         syncWorkoutOverlayScrollLock();
-        renderStopwatch();
+        updateWorkoutClocks();
     });
     document.getElementById('workout-timer-close-btn')?.addEventListener('click', () => {
         document.getElementById('workout-timer-overlay').hidden = true;
@@ -4040,6 +4376,7 @@ function initializeWorkoutProgram() {
     });
     document.addEventListener('keydown', event => {
         if (event.key === 'Escape') {
+            if (!document.getElementById('workout-timer-done-overlay').hidden) return;
             const overlay = document.getElementById('workout-timer-overlay');
             if (overlay && !overlay.hidden) {
                 overlay.hidden = true;
@@ -4057,9 +4394,18 @@ function initializeWorkoutProgram() {
     document.getElementById('workout-timer-reset-btn')?.addEventListener('click', resetStopwatch);
     document.getElementById('workout-mode-stopwatch-btn')?.addEventListener('click', () => setWorkoutTimerMode('stopwatch'));
     document.getElementById('workout-mode-countdown-btn')?.addEventListener('click', () => setWorkoutTimerMode('countdown'));
+    const closeTimerDone = () => {
+        document.getElementById('workout-timer-done-overlay').hidden = true;
+        syncWorkoutOverlayScrollLock();
+        if (!document.getElementById('workout-timer-overlay').hidden) document.getElementById('workout-timer-start-btn').focus();
+    };
+    document.getElementById('workout-timer-done-close')?.addEventListener('click', closeTimerDone);
+    document.addEventListener('keydown', event => {
+        if (event.key === 'Escape' && !document.getElementById('workout-timer-done-overlay').hidden) closeTimerDone();
+    });
     document.getElementById('workout-timer-duration-input')?.addEventListener('change', () => syncCountdownDurationControls());
     document.getElementById('workout-timer-duration-seconds')?.addEventListener('change', () => syncCountdownDurationControls());
-    syncCountdownDurationControls(false);
+    syncCountdownDurationControls();
     document.querySelectorAll('.workout-duration-adjust').forEach(button => {
         button.addEventListener('click', () => {
             const input = document.getElementById(button.dataset.target);
@@ -4095,7 +4441,7 @@ function initializeWorkoutProgram() {
     document.getElementById('workout-exercise-duration')?.addEventListener('change', () => syncExerciseDurationSlider('workout-exercise-duration', false));
     document.getElementById('workout-exercise-rest')?.addEventListener('change', () => syncExerciseDurationSlider('workout-exercise-rest', false));
     document.getElementById('workout-reset-all-stats-btn')?.addEventListener('click', () => {
-        document.getElementById('reset-all-progress-btn')?.click();
+        resetWorkoutStats();
     });
     document.getElementById('workout-achievement-add-btn')?.addEventListener('click', () => openWorkoutAchievementEditor());
     document.getElementById('workout-achievement-form')?.addEventListener('submit', saveWorkoutAchievementFromForm);
@@ -4986,29 +5332,22 @@ function renderDevDashboard() {
     }
 }
 
-// Function to update the countdown to July 10th
+const DEFAULT_DAYS_LEFT_TARGET_DATE = '2026-11-27';
+
+// Update the countdown to the saved date or the default target.
 function updateDaysLeftTracker() {
     const daysLeftCountEl = document.getElementById('days-left-count');
     if (!daysLeftCountEl) return;
 
     const today = new Date();
-    const currentYear = today.getFullYear();
-    
-    // Check if custom target date is stored in localStorage
-    const savedDateStr = localStorage.getItem('daysLeftTargetDate');
-    let targetDate;
-    
-    if (savedDateStr) {
-        targetDate = new Date(savedDateStr);
-    } else {
-        // July is month 6 (0-indexed)
-        targetDate = new Date(currentYear, 6, 10);
-        
-        // If today is past July 10th of current year, countdown to next year's July 10th
-        if (today > targetDate) {
-            targetDate = new Date(currentYear + 1, 6, 10);
-        }
+    const migrationKey = 'daysLeftDefault20261127Applied';
+    if (!localStorage.getItem(migrationKey)) {
+        localStorage.removeItem('daysLeftTargetDate');
+        localStorage.setItem(migrationKey, 'true');
     }
+    const savedDateStr = localStorage.getItem('daysLeftTargetDate') || DEFAULT_DAYS_LEFT_TARGET_DATE;
+    let targetDate = parseWorkoutDate(savedDateStr);
+    if (Number.isNaN(targetDate.getTime())) targetDate = parseWorkoutDate(DEFAULT_DAYS_LEFT_TARGET_DATE);
     
     // Set both to midnight to get precise calendar days remaining
     const todayMidnight = new Date(today.getFullYear(), today.getMonth(), today.getDate());
@@ -5035,7 +5374,7 @@ function openDevStatEditor(key) {
         title.textContent = 'Edit countdown date';
         label.textContent = 'Target date';
         input.type = 'date';
-        input.value = localStorage.getItem(key) || '2026-07-10';
+        input.value = localStorage.getItem(key) || DEFAULT_DAYS_LEFT_TARGET_DATE;
     } else {
         title.textContent = 'Edit Maya clicks';
         label.textContent = 'Click count';
@@ -5150,8 +5489,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Show welcome initially
-    showScreen('welcome');
+    // Return to the workout dashboard after its reset-triggered reload.
+    if (sessionStorage.getItem('triviaResetToWorkoutDashboard') === 'true') {
+        sessionStorage.removeItem('triviaResetToWorkoutDashboard');
+        renderWorkoutPlanner();
+        showScreen('workout');
+    } else {
+        showScreen('welcome');
+    }
     // Initialize maya click counter display
     const initialCount = parseInt(localStorage.getItem('mayaClickCount') || '0', 10) || 0;
     const countEl = document.getElementById('maya-click-count');

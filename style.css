@@ -761,6 +761,14 @@ button {
     gap: 8px;
 }
 
+.workout-day-pill[draggable="true"] { cursor: grab; }
+.workout-day-pill.day-dragging { opacity: 0.5; cursor: grabbing; }
+.workout-day-pill.day-drop-target {
+    outline: 2px solid var(--secondary);
+    outline-offset: 2px;
+    box-shadow: 0 0 16px rgba(0, 206, 201, 0.4);
+}
+
 .workout-day-pill {
     background: rgba(255,255,255,0.04);
     border: 1px solid var(--glass-border);
@@ -999,6 +1007,31 @@ button {
     gap: 8px;
     margin-bottom: 12px;
 }
+
+.workout-builder-filters {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+}
+
+.workout-builder-filters .filter-row {
+    flex: 1 1 280px;
+    margin-bottom: 0;
+}
+
+.workout-type-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: flex-end;
+    margin-left: auto;
+}
+
+.workout-type-filters .filter-chip { white-space: nowrap; }
+.workout-exercise-empty { color: var(--text-muted); padding: 18px 4px; font-size: 0.85rem; }
 
 .filter-chip {
     background: rgba(255,255,255,0.04);
@@ -1812,6 +1845,29 @@ button {
     display: none;
 }
 
+.workout-timer-done-overlay[hidden] { display: none; }
+.workout-timer-done-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 11000;
+    display: grid;
+    place-items: center;
+    padding: 20px;
+    background: rgba(4, 5, 12, 0.76);
+    backdrop-filter: blur(8px);
+}
+.workout-timer-done-card {
+    width: min(360px, 100%);
+    padding: 28px;
+    border: 1px solid rgba(0, 206, 201, 0.4);
+    border-radius: 22px;
+    background: linear-gradient(145deg, #171a2c, #0e1120);
+    text-align: center;
+    box-shadow: 0 26px 80px rgba(0, 0, 0, 0.55);
+}
+.workout-timer-done-card h3 { color: var(--secondary); }
+.workout-timer-done-card p { margin: 12px 0 20px; color: var(--text-muted); }
+
 .workout-timer-overlay {
     position: fixed;
     inset: 0;
@@ -1940,6 +1996,8 @@ body.workout-overlay-open #weight-history-screen {
 .workout-day-status[data-day-type="rest"] { color: #c9b9ff; border-color: rgba(174,151,255,0.4); background: rgba(174,151,255,0.12); }
 
 #workout-now-list { color: var(--text-muted); text-align: center; }
+.workout-now-estimate { margin: -10px 0 20px; color: var(--secondary); font-size: 0.9rem; font-weight: 700; text-align: center; }
+.workout-now-estimate[hidden] { display: none; }
 .workout-now-exercises { display: grid; gap: 10px; padding: 0; list-style: none; counter-reset: workout-exercise; text-align: left; }
 .workout-now-exercises li { counter-increment: workout-exercise; display: grid; grid-template-columns: 36px 1fr; gap: 4px 12px; align-items: center; padding: 16px; border: 1px solid rgba(0, 206, 201, 0.2); border-radius: 16px; background: rgba(255,255,255,0.04); }
 .workout-now-exercises li::before { content: counter(workout-exercise); grid-row: span 2; display: grid; place-items: center; width: 36px; height: 36px; border-radius: 12px; background: rgba(0,206,201,0.12); color: var(--secondary); font-weight: 800; }
@@ -2223,7 +2281,8 @@ body.workout-overlay-open #weight-history-screen {
 
 .saved-plan-controls {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    max-width: 650px;
     gap: 9px;
     align-items: end;
     margin-top: 16px;
@@ -2267,6 +2326,20 @@ body.workout-overlay-open #weight-history-screen {
 #workout-switch-plan-btn:disabled {
     opacity: 0.45;
     cursor: not-allowed;
+}
+
+#workout-delete-plan-btn {
+    border-color: rgba(231, 76, 60, 0.55);
+    color: #ffaaaa;
+}
+
+#workout-delete-plan-btn:hover {
+    background: rgba(214, 48, 49, 0.22);
+}
+
+@media (max-width: 520px) {
+    .saved-plan-controls { grid-template-columns: 1fr 1fr; }
+    .saved-plan-select-control { grid-column: 1 / -1; }
 }
 
 .workout-plan-transfer-actions {
@@ -2387,7 +2460,7 @@ body.workout-overlay-open #workout-screen {
 
 .workout-share-menu {
     position: relative;
-    align-self: flex-end;
+    align-self: stretch;
     margin-top: 4px;
 }
 
@@ -2416,8 +2489,11 @@ body.workout-overlay-open #workout-screen {
 
 .workout-share-menu > summary {
     list-style: none;
+    cursor: pointer;
     min-height: 40px;
-    display: inline-flex;
+    display: flex;
+    width: max-content;
+    margin-left: auto;
     align-items: center;
     justify-content: center;
 }
@@ -2428,6 +2504,7 @@ body.workout-overlay-open #workout-screen {
 
 .workout-share-menu .workout-plan-transfer-actions {
     margin-top: 10px;
+    justify-content: flex-end;
 }
 
 .qotd-admin-controls {
@@ -4461,15 +4538,27 @@ body.workout-overlay-open #workout-screen {
 }
 
 /* Minesweeper Game */
+#minesweeper-screen {
+    container-type: size;
+}
+
 .minesweeper-board {
+    --minesweeper-cell-size: max(1px, min(
+        (100cqw - 22px - (var(--minesweeper-columns) - 1) * 2px) / var(--minesweeper-columns),
+        (100cqh - 75px - 22px - (var(--minesweeper-rows) - 1) * 2px) / var(--minesweeper-rows)
+    ));
     display: grid;
+    grid-template-columns: repeat(var(--minesweeper-columns), var(--minesweeper-cell-size));
+    grid-template-rows: repeat(var(--minesweeper-rows), var(--minesweeper-cell-size));
+    flex: none;
+    align-self: center;
+    width: max-content;
     gap: 2px;
     background: rgba(0,0,0,0.3);
     padding: 10px;
     border-radius: 10px;
     border: 1px solid var(--glass-border);
     margin-bottom: 20px;
-    aspect-ratio: 1;
 }
 
 .minesweeper-cell {
@@ -4481,7 +4570,9 @@ body.workout-overlay-open #workout-screen {
     justify-content: center;
     cursor: pointer;
     font-weight: bold;
-    font-size: clamp(0.38rem, 2vw, 0.9rem);
+    font-size: clamp(0.35rem, calc(var(--minesweeper-cell-size) * 0.55), 0.9rem);
+    min-width: 0;
+    min-height: 0;
     user-select: none;
     transition: all 0.1s ease;
     color: var(--text-main);
