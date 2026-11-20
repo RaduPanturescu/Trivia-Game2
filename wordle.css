@@ -6,7 +6,7 @@
 
 .wordle-shell {
     display: flex;
-    flex: 1;
+    flex: 1 0 auto;
     flex-direction: column;
     justify-content: center;
     width: 100%;
@@ -57,9 +57,10 @@
 
 .wordle-board {
     display: grid;
+    flex: 0 0 auto;
     grid-template-columns: repeat(5, minmax(0, 1fr));
     gap: 6px;
-    width: min(100%, 330px);
+    width: min(100%, 330px, max(180px, calc(83.333vh - 280px)));
     margin: 0 auto;
 }
 
@@ -117,6 +118,7 @@
 
 .wordle-keyboard {
     display: flex;
+    flex: 0 0 auto;
     flex-direction: column;
     gap: 7px;
     width: 100%;
@@ -263,5 +265,44 @@
 
     .wordle-key {
         height: 44px;
+    }
+}
+
+@media (max-width: 320px) {
+    .wordle-key-row {
+        gap: 2px;
+    }
+
+    .wordle-key {
+        padding: 0;
+    }
+
+    .wordle-key-wide {
+        font-size: 0.55rem;
+    }
+}
+
+@media (max-width: 270px) {
+    .wordle-key-wide {
+        flex-grow: 2;
+    }
+}
+
+@media (max-height: 700px) {
+    .wordle-shell {
+        padding-top: 0;
+    }
+
+    .wordle-heading {
+        margin-bottom: 0;
+    }
+
+    .wordle-daily-bar {
+        margin: 6px 0;
+    }
+
+    .wordle-message {
+        min-height: 30px;
+        margin: 4px 0;
     }
 }

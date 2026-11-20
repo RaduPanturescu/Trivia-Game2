@@ -894,20 +894,6 @@ button {
     gap: 16px;
 }
 
-.personal-stats-panel .panel-header {
-    margin-bottom: 12px;
-}
-
-.personal-stats-panel .workout-metrics {
-    width: 100%;
-}
-
-.personal-stats-panel {
-    background: transparent;
-    border-color: transparent;
-    padding: 0;
-}
-
 .workout-panel {
     background: rgba(255,255,255,0.03);
     border: 1px solid rgba(255,255,255,0.055);
@@ -920,9 +906,25 @@ button {
     align-items: center;
     justify-content: space-between;
     gap: 20px;
-    background: transparent;
-    border-color: transparent;
-    padding: 0;
+}
+
+/* Dashboard panels fade independently of their contents. */
+#workout-screen .workout-panel {
+    position: relative;
+    border: 0;
+    background: linear-gradient(to bottom, rgba(255,255,255,0.03), rgba(255,255,255,0) 80%);
+}
+
+#workout-screen .workout-panel::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border: 1px solid rgba(255,255,255,0.055);
+    border-bottom: 0;
+    border-radius: inherit;
+    -webkit-mask-image: linear-gradient(to bottom, #000, transparent 80%);
+    mask-image: linear-gradient(to bottom, #000, transparent 80%);
+    pointer-events: none;
 }
 
 .personal-stats-panel .panel-header {
@@ -977,10 +979,6 @@ button {
 
 .collapsible-panel > .panel-header::-webkit-details-marker {
     display: none;
-}
-
-.collapsible-panel[open] > .panel-header {
-    border-bottom: 1px solid var(--glass-border);
 }
 
 .collapse-indicator {
@@ -2017,6 +2015,20 @@ body.workout-overlay-open #weight-history-screen {
 .bmi-form input { width: 100%; padding: 11px; border: 1px solid var(--glass-border); border-radius: 10px; background: rgba(0,0,0,0.25); color: var(--text-main); font: inherit; }
 .bmi-form input:focus { outline: 2px solid rgba(0,206,201,0.5); outline-offset: 2px; }
 .bmi-result { margin: 16px 0 8px; color: var(--secondary); font-weight: 700; line-height: 1.5; }
+.bmi-scale { margin: 42px 2px 4px; }
+.bmi-scale[hidden] { display: none; }
+.bmi-scale-track { position: relative; display: flex; height: 13px; overflow: visible; border: 1px solid rgba(255,255,255,0.22); border-radius: 999px; box-shadow: 0 0 16px rgba(0,0,0,0.2); }
+.bmi-scale-segment { display: block; height: 100%; }
+.bmi-scale-underweight { flex: 3.5; border-radius: 999px 0 0 999px; background: #5da9ff; }
+.bmi-scale-healthy { flex: 6.5; background: #00b894; }
+.bmi-scale-overweight { flex: 5; background: #f0b429; }
+.bmi-scale-obesity { flex: 10; border-radius: 0 999px 999px 0; background: #e85d75; }
+.bmi-scale-marker { position: absolute; top: -5px; z-index: 1; width: 3px; height: 23px; border: 1px solid #fff; border-radius: 3px; background: #fff; box-shadow: 0 0 8px rgba(0,0,0,0.75); transform: translateX(-50%); }
+.bmi-scale-marker span { position: absolute; bottom: calc(100% + 5px); left: 50%; padding: 3px 7px; border: 1px solid rgba(0,206,201,0.55); border-radius: 7px; background: #171a2c; color: #fff; font-size: 0.72rem; font-weight: 800; line-height: 1.2; white-space: nowrap; transform: translateX(-50%); }
+.bmi-scale-labels { display: grid; grid-template-columns: 3.5fr 6.5fr 5fr 10fr; gap: 0; margin-top: 11px; color: var(--text-muted); font-size: 0.68rem; line-height: 1.4; text-align: center; }
+.bmi-scale-labels span:first-child { text-align: left; }
+.bmi-scale-labels span:last-child { text-align: right; }
+.bmi-scale-note { margin: 10px 0 0; color: var(--text-muted); font-size: 0.72rem; line-height: 1.45; }
 
 .workout-weight-entry-card {
     display: grid;
@@ -4561,6 +4573,48 @@ body.workout-overlay-open #workout-screen {
     margin-bottom: 20px;
 }
 
+.minesweeper-board-viewport {
+    width: 100%;
+    min-width: 0;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.minesweeper-board-viewport .minesweeper-board {
+    margin-right: auto;
+    margin-left: auto;
+}
+
+.minesweeper-flag-mode {
+    display: none;
+    align-self: flex-start;
+    min-height: 44px;
+    margin-bottom: 12px;
+    padding: 10px 14px;
+    border: 1px solid var(--glass-border);
+    border-radius: 12px;
+    background: rgba(255,255,255,0.06);
+    font-weight: 700;
+}
+
+.minesweeper-flag-mode[aria-pressed="true"] {
+    border-color: var(--secondary);
+    background: rgba(0,206,201,0.18);
+}
+
+@media (max-width: 600px), (pointer: coarse) {
+    .minesweeper-flag-mode {
+        display: block;
+    }
+
+    .minesweeper-board {
+        --minesweeper-cell-size: max(32px, min(
+            (100cqw - 22px - (var(--minesweeper-columns) - 1) * 2px) / var(--minesweeper-columns),
+            (100cqh - 75px - 22px - (var(--minesweeper-rows) - 1) * 2px) / var(--minesweeper-rows)
+        ));
+    }
+}
+
 .minesweeper-cell {
     background: linear-gradient(135deg, rgba(108, 92, 231, 0.15), rgba(0, 206, 201, 0.1));
     border: 1px solid var(--glass-border);
@@ -4984,5 +5038,206 @@ body.workout-overlay-open #workout-screen {
     border-radius: 12px;
     margin-left: 10px;
     font-weight: 700;
+}
+
+/* Small screens retain the screen transitions while each screen scrolls. */
+@media (max-width: 600px), (max-height: 500px) {
+    body {
+        min-height: 100vh;
+        min-height: 100dvh;
+    }
+
+    #app {
+        width: 100%;
+        max-width: none;
+        height: 100vh;
+        height: 100dvh;
+        max-height: none;
+        border: 0;
+        border-radius: 0;
+    }
+
+    .screen {
+        padding-top: max(30px, env(safe-area-inset-top));
+        padding-left: max(16px, env(safe-area-inset-left));
+        padding-right: max(16px, env(safe-area-inset-right));
+        padding-bottom: max(24px, env(safe-area-inset-bottom));
+        overflow-x: hidden;
+        overflow-y: auto;
+        overscroll-behavior-y: contain;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .screen > .back-btn {
+        top: max(20px, env(safe-area-inset-top));
+        left: max(20px, env(safe-area-inset-left));
+    }
+
+    #welcome-screen {
+        padding-top: max(20px, env(safe-area-inset-top));
+        padding-bottom: max(16px, env(safe-area-inset-bottom));
+    }
+
+    #welcome-screen > .welcome-top-actions {
+        top: max(16px, env(safe-area-inset-top));
+        right: max(18px, env(safe-area-inset-right));
+    }
+
+    .screen > :not(.back-btn) {
+        flex-shrink: 0;
+    }
+
+    .screen input,
+    .screen select,
+    .screen textarea {
+        max-width: 100%;
+        min-width: 0;
+        font-size: 16px;
+    }
+
+    #result-screen {
+        justify-content: safe center;
+    }
+
+    .millionaire-title-center,
+    .millionaire-name-panel {
+        min-height: calc(100dvh - 60px);
+    }
+
+    #workout-screen {
+        padding-left: max(16px, env(safe-area-inset-left));
+        padding-right: max(16px, env(safe-area-inset-right));
+    }
+
+    .workout-week-nav {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    .workout-week-nav .week-label {
+        flex: 1 1 120px;
+    }
+
+    .personal-stats-panel .workout-metrics {
+        flex-wrap: wrap;
+    }
+
+    .mail-overlay,
+    .mail-compose-overlay,
+    .dev-stat-edit-overlay,
+    .workout-timer-overlay,
+    .workout-timer-done-overlay,
+    .workout-weight-entry-overlay,
+    .workout-calendar-status-overlay {
+        padding: 12px;
+        overflow-y: auto;
+        touch-action: auto;
+        overscroll-behavior: contain;
+    }
+
+    .mail-modal,
+    .mail-compose-panel,
+    .dev-stat-edit-panel,
+    .workout-timer-window,
+    .workout-timer-done-card,
+    .workout-weight-entry-card,
+    .workout-exercise-modal-window,
+    .workout-calendar-status-dialog {
+        max-height: calc(100dvh - 24px);
+        overflow-y: auto;
+        overscroll-behavior: contain;
+    }
+}
+
+@media (max-width: 600px), (max-height: 500px) {
+    .difficulty-list {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .diff-btn {
+        min-width: 0;
+        padding: 12px;
+        overflow-wrap: anywhere;
+    }
+
+    #app.millionaire-active .millionaire-content {
+        flex-direction: column-reverse;
+        gap: 12px;
+    }
+
+    #app.millionaire-active .millionaire-main-panel {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .millionaire-sidebar,
+    .millionaire-sidebar.expanded {
+        width: 100%;
+        min-width: 0;
+        max-width: none;
+    }
+
+    .millionaire-sidebar.collapsed:not(.expanded) {
+        height: 54px;
+    }
+
+    .millionaire-sidebar.expanded {
+        max-height: 50dvh;
+        overflow-y: auto;
+    }
+
+    #app.millionaire-active .millionaire-prize-content {
+        padding: 54px 16px 16px;
+    }
+
+    .millionaire-options-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .minesweeper-game-header,
+    .sudoku-game-header {
+        flex-wrap: wrap;
+        gap: 10px;
+        padding-top: 40px;
+    }
+
+    #minesweeper-game-title {
+        margin: 0 !important;
+    }
+
+    .minesweeper-game-header > div,
+    .sudoku-game-header > div {
+        flex-wrap: wrap;
+    }
+
+    .sudoku-leaderboard-header,
+    .sudoku-leaderboard-header > div {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .leaderboard-row {
+        grid-template-columns: 28px minmax(0, 1fr) auto;
+        gap: 6px;
+        overflow-wrap: anywhere;
+    }
+
+    .leaderboard-row > :last-child {
+        grid-column: 2 / -1;
+    }
+
+    .minesweeper-carousel {
+        grid-template-columns: 36px minmax(0, 1fr) 36px;
+        gap: 6px;
+    }
+
+    .minesweeper-difficulty-card {
+        padding-right: 12px;
+        padding-left: 12px;
+    }
+
+    .toast {
+        max-width: calc(100vw - 32px);
+    }
 }
 
