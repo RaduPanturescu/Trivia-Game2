@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Bianka Trivia Night</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="puzzle.css">
@@ -322,6 +322,7 @@
                                 <select id="workout-saved-plans-select"><option value="">Choose a saved plan</option></select>
                             </label>
                             <button id="workout-switch-plan-btn" class="mini-btn" type="button" disabled>Switch Plan</button>
+                            <button id="workout-edit-plan-name-btn" class="mini-btn" type="button" hidden>Edit Plan Name</button>
                             <button id="workout-delete-plan-btn" class="mini-btn" type="button" hidden>Delete Plan</button>
                         </div>
                     </div>
@@ -372,6 +373,22 @@
                         <button class="primary-btn small-btn" type="submit">Calculate BMI</button>
                     </form>
                     <p id="bmi-result" class="bmi-result" aria-live="polite">Log your weight and enter your height and age to calculate your BMI.</p>
+                    <div id="bmi-scale" class="bmi-scale" hidden>
+                        <div id="bmi-scale-track" class="bmi-scale-track" role="img" aria-label="Adult BMI category scale">
+                            <span class="bmi-scale-segment bmi-scale-underweight"></span>
+                            <span class="bmi-scale-segment bmi-scale-healthy"></span>
+                            <span class="bmi-scale-segment bmi-scale-overweight"></span>
+                            <span class="bmi-scale-segment bmi-scale-obesity"></span>
+                            <span id="bmi-scale-marker" class="bmi-scale-marker" aria-hidden="true"><span id="bmi-scale-value"></span></span>
+                        </div>
+                        <div class="bmi-scale-labels" aria-hidden="true">
+                            <span>Underweight<br>&lt;18.5</span>
+                            <span>Healthy<br>18.5–24.9</span>
+                            <span>Overweight<br>25–29.9</span>
+                            <span>Obesity<br>≥30</span>
+                        </div>
+                        <p class="bmi-scale-note">Adult ranges shown. For ages under 20, BMI is interpreted using age- and sex-specific percentiles.</p>
+                    </div>
                 </section>
                 <section class="workout-panel weight-history-stats-panel">
                     <div class="panel-header"><h3>Other Stats</h3></div>
@@ -537,7 +554,7 @@
                         <button class="lifeline-btn" id="lifeline-audience">Audience Vote</button>
                         <button class="lifeline-btn" id="lifeline-host">Ask the Host</button>
                     </div>
-                    <button id="millionaire-next-btn" class="primary-btn hidden">Next Question</button>
+                    <button id="millionaire-next-btn" class="primary-btn hidden"">Next Question</button>
                     <p id="millionaire-status-text" class="subtitle" style="margin-top: 15px;">Use a lifeline to stop the timer.</p>
                     <button id="millionaire-skip-suspense-btn" class="primary-btn" style="margin-top: 10px; display: none; width: auto; padding: 12px 24px; font-size: 1.05rem; background: var(--accent); margin-left: auto; margin-right: auto; box-shadow: 0 0 15px rgba(253, 121, 168, 0.4);">Skip Suspense</button>
                 </div>
@@ -693,14 +710,17 @@
                     <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
             </button>
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <div class="minesweeper-game-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                 <h2 id="minesweeper-game-title" class="screen-title" style="margin: 30px 0 0 0; font-size: 1.5rem;">Minesweeper</h2>
                 <div style="display: flex; gap: 10px;">
                     <div id="minesweeper-timer" style="background: var(--glass-bg); padding: 8px 15px; border-radius: 15px; border: 1px solid var(--secondary); font-weight: bold;">⏱️ 0:00</div>
                     <div id="minesweeper-mine-count" style="background: var(--glass-bg); padding: 8px 15px; border-radius: 15px; border: 1px solid var(--accent); font-weight: bold;">💣 10</div>
                 </div>
             </div>
-            <div id="minesweeper-board" class="minesweeper-board"></div>
+            <button id="minesweeper-flag-mode" class="minesweeper-flag-mode" type="button" aria-pressed="false">🚩 Flag mode: Off</button>
+            <div class="minesweeper-board-viewport" tabindex="0" role="region" aria-label="Minesweeper board, scroll horizontally for larger boards">
+                <div id="minesweeper-board" class="minesweeper-board"></div>
+            </div>
             <div id="minesweeper-result" class="minesweeper-result" style="display: none;"></div>
             <div class="sudoku-leaderboard-panel minesweeper-leaderboard-panel">
                 <div class="sudoku-leaderboard-header">
@@ -978,7 +998,7 @@
     <audio id="bg-music" loop>
         <source src="bg-music.mp3" type="audio/mpeg">
     </audio>
-    <audio id="workout-music" loop>
+    <audio id="workout-music" loop preload="none">
         <source src="assets/WorkoutMusic.wav" type="audio/wav">
     </audio>
     <audio id="sfx-correct">

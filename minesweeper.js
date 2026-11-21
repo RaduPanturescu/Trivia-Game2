@@ -23,6 +23,19 @@ const minesweeperSizes = {
     hard: { rows: 16, cols: 30, mines: 99, label: 'Expert' }
 };
 
+let minesweeperFlagMode = false;
+const minesweeperFlagModeButton = document.getElementById('minesweeper-flag-mode');
+
+function setMinesweeperFlagMode(enabled) {
+    minesweeperFlagMode = enabled;
+    if (minesweeperFlagModeButton) {
+        minesweeperFlagModeButton.setAttribute('aria-pressed', String(enabled));
+        minesweeperFlagModeButton.textContent = `🚩 Flag mode: ${enabled ? 'On' : 'Off'}`;
+    }
+}
+
+minesweeperFlagModeButton?.addEventListener('click', () => setMinesweeperFlagMode(!minesweeperFlagMode));
+
 function initMinesweeper(difficulty, customSettings = null) {
     const size = difficulty === 'custom' ? customSettings : minesweeperSizes[difficulty];
     const customDimensionsInBounds = difficulty !== 'custom' ||
@@ -47,6 +60,7 @@ function initMinesweeper(difficulty, customSettings = null) {
     );
     
     minesweeperState.gameActive = true;
+    setMinesweeperFlagMode(false);
     minesweeperState.difficulty = difficulty;
     minesweeperState.customSettings = difficulty === 'custom' ? { ...size } : null;
     minesweeperState.otterMode = Boolean(document.getElementById('minesweeper-otter-mode-toggle')?.checked);
@@ -147,7 +161,10 @@ function renderMinesweeperBoard() {
                 cell.innerHTML = `<span style="opacity: 0.35;">${minesweeperState.otterMode ? '🦦' : '💣'}</span>`;
             }
             
-            cell.addEventListener('click', () => revealCell(r, c));
+            cell.addEventListener('click', () => {
+                if (minesweeperFlagMode) flagCell(r, c);
+                else revealCell(r, c);
+            });
             cell.addEventListener('contextmenu', (e) => {
                 e.preventDefault();
                 flagCell(r, c);

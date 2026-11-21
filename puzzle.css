@@ -3,12 +3,14 @@
 }
 
 .game-hub-screen {
-    justify-content: center;
+    justify-content: flex-start;
+    padding: 0;
     background: radial-gradient(ellipse at 50% 8%, rgba(108,92,231,0.24), transparent 52%);
 }
 
 .game-hub-content {
     display: flex;
+    flex: 1 0 auto;
     flex-direction: column;
     justify-content: center;
     width: 100%;
@@ -221,7 +223,7 @@
 
 .your-puzzles-list {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 190px), 1fr));
     gap: 12px;
     margin-top: 15px;
 }
@@ -297,6 +299,15 @@
     overflow: hidden;
 }
 
+.puzzle-game-heading > div {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.puzzle-game-heading .mini-btn {
+    flex: 0 0 auto;
+}
+
 .puzzle-instructions {
     margin: 12px 0;
     color: var(--text-muted);
@@ -312,7 +323,6 @@
     border: 1px solid rgba(255,255,255,0.07);
     border-radius: 14px;
     background: rgba(0,0,0,0.18);
-    overscroll-behavior: contain;
 }
 
 .puzzle-board-viewport {
@@ -443,11 +453,22 @@
     }
 
     .game-hub-content {
-        padding: 54px 18px 24px;
+        padding: 70px 18px 24px;
     }
 }
 
 @media (max-width: 430px) {
+    .puzzle-screen {
+        padding: 28px 14px 28px;
+    }
+
+    .puzzle-daily-panel,
+    .puzzle-create-panel,
+    .your-puzzles-panel,
+    .puzzle-game-panel {
+        padding: 14px;
+    }
+
     .puzzle-create-controls {
         grid-template-columns: 1fr;
     }
@@ -461,10 +482,21 @@
     }
 
     .game-hub-grid {
-        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+
+    .game-hub-card {
+        min-height: 120px;
+        padding: 14px 8px;
     }
 
     .game-hub-content {
-        padding: 50px 14px 20px;
+        padding: 70px 14px 20px;
+    }
+}
+
+@media (max-width: 270px) {
+    .game-hub-grid {
+        grid-template-columns: 1fr;
     }
 }

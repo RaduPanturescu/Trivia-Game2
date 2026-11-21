@@ -1302,24 +1302,29 @@ sfxVolumeSlider.addEventListener('input', (e) => {
 
 function syncWorkoutMusic(screenName) {
     const isWorkoutScreen = ['workoutMenu', 'workout', 'workoutNow', 'weightHistory'].includes(screenName);
-    if (isWorkoutScreen === workoutMusicActive) return;
-    workoutMusicActive = isWorkoutScreen;
-    (isWorkoutScreen ? bgMusic : workoutMusic).pause();
-    isMusicPlaying = false;
+    if (isWorkoutScreen !== workoutMusicActive) {
+        workoutMusicActive = isWorkoutScreen;
+        (isWorkoutScreen ? bgMusic : workoutMusic).pause();
+        isMusicPlaying = false;
+    }
     if (musicEnabled) playMusic();
 }
 
 function playMusic() {
-    if (musicEnabled && !isMusicPlaying && !millionaireFlowActive) {
+    if (musicEnabled && !millionaireFlowActive) {
         const track = workoutMusicActive ? workoutMusic : bgMusic;
+        if (!track.paused) return;
         const volume = parseFloat(musicVolumeSlider.value);
         track.volume = Number.isFinite(volume) ? volume : 0.3;
         track.play().then(() => {
-            if (musicEnabled && track === (workoutMusicActive ? workoutMusic : bgMusic)) {
+            if (musicEnabled && !track.paused && track === (workoutMusicActive ? workoutMusic : bgMusic)) {
                 isMusicPlaying = true;
             }
-        }).catch(() => {
-            // Playback can be blocked until a user interaction.
+        }).catch((error) => {
+            // A later user interaction can retry playback after an autoplay restriction.
+            if (error.name !== 'NotAllowedError' && error.name !== 'AbortError') {
+                console.warn('Unable to play music:', error);
+            }
         });
     }
 }
@@ -1568,6 +1573,9 @@ const workoutExerciseCatalog = [
     { id: 'burpees', name: 'Burpees', category: 'conditioning', sets: 3, reps: 10, weight: 0, bodyWeight: true, duration: 45, rest: 60, description: 'Move from standing to a plank and back to standing.' },
     { id: 'wall-sit', name: 'Wall Sit', category: 'conditioning', sets: 3, reps: 1, weight: 0, bodyWeight: true, duration: 45, rest: 60, description: 'Hold a seated position with your back against a wall.' },
     { id: 'shoulder-taps', name: 'Shoulder Taps', category: 'upper body', sets: 3, reps: 12, weight: 0, bodyWeight: true, duration: 45, rest: 60, description: 'From a plank, alternate tapping each shoulder.' },
+    { id: 'pike-push-ups', name: 'Pike Push Ups', category: 'upper body', sets: 3, reps: 10, weight: 0, bodyWeight: true, duration: 45, rest: 60, description: 'Keep the hips high and lower the head toward the floor for a shoulder-focused press.' },
+    { id: 'dips', name: 'Dips', category: 'upper body', sets: 3, reps: 10, weight: 0, bodyWeight: true, duration: 45, rest: 60, description: 'Lower and press using parallel bars or a stable bench.' },
+    { id: 'diamond-push-ups', name: 'Diamond Push Ups', category: 'upper body', sets: 3, reps: 10, weight: 0, bodyWeight: true, duration: 45, rest: 60, description: 'Place your hands close together in a diamond shape and press with control.' },
     { id: 'step-ups', name: 'Step-Ups', category: 'legs', sets: 3, reps: 10, weight: 0, bodyWeight: true, duration: 45, rest: 60, description: 'Step onto a stable platform and return with control.' }
 ];
 
@@ -1923,7 +1931,29 @@ function renderSavedWorkoutPlans() {
 function updateSavedWorkoutPlanControls() {
     const selected = !!document.getElementById('workout-saved-plans-select')?.value;
     document.getElementById('workout-switch-plan-btn').disabled = !selected;
+    document.getElementById('workout-edit-plan-name-btn').hidden = !selected;
     document.getElementById('workout-delete-plan-btn').hidden = !selected;
+}
+
+function editSavedWorkoutPlanName() {
+    const planId = document.getElementById('workout-saved-plans-select')?.value;
+    const plans = getSavedWorkoutPlans();
+    const plan = plans.find(item => item.id === planId);
+    if (!plan) return;
+
+    const newName = window.prompt('Enter a new name for this saved workout plan:', plan.name)?.trim();
+    if (newName === undefined) return;
+    if (!newName) {
+        showToast({ icon: '⚠️', name: 'Plan name required', desc: 'Enter a name before saving this workout plan.' });
+        return;
+    }
+
+    plan.name = newName;
+    localStorage.setItem('triviaWorkoutSavedPlans', JSON.stringify(plans));
+    renderSavedWorkoutPlans();
+    document.getElementById('workout-saved-plans-select').value = planId;
+    updateSavedWorkoutPlanControls();
+    showToast({ icon: '✏️', name: 'Plan name updated', desc: `Saved plan renamed to “${newName}”.` });
 }
 
 function saveNamedWorkoutPlan() {
@@ -2838,7 +2868,18 @@ function importWorkoutProgramFile(file) {
             saveWorkoutData();
             hydrateWorkoutCategoriesSelect();
             renderWorkoutPlanner();
-            showToast({ icon: '📥', name: 'Program imported', desc: 'Your workout plan is ready.' });
+
+            const importName = (file.name || '').trim() || 'Imported Workout Plan';
+            const plans = getSavedWorkoutPlans();
+            const importedSnapshot = getWorkoutPlanSnapshot(importName);
+            plans.push(importedSnapshot);
+            localStorage.setItem('triviaWorkoutSavedPlans', JSON.stringify(plans));
+            renderSavedWorkoutPlans();
+            const savedPlansSelect = document.getElementById('workout-saved-plans-select');
+            if (savedPlansSelect) savedPlansSelect.value = importedSnapshot.id;
+            updateSavedWorkoutPlanControls();
+
+            showToast({ icon: '📥', name: 'Program imported', desc: `Saved as “${importName}”.` });
         } catch (error) {
             alert(`Could not import workout program: ${error.message}`);
         }
@@ -3218,18 +3259,32 @@ function renderBmiResult() {
     const heightInput = document.getElementById('bmi-height');
     const ageInput = document.getElementById('bmi-age');
     const result = document.getElementById('bmi-result');
+    const scale = document.getElementById('bmi-scale');
+    const scaleTrack = document.getElementById('bmi-scale-track');
+    const marker = document.getElementById('bmi-scale-marker');
+    const valueLabel = document.getElementById('bmi-scale-value');
     const latestWeight = getBodyWeightEntries().at(-1);
     if (!heightInput.value || !ageInput.value || !heightInput.validity.valid || !ageInput.validity.valid) {
         result.textContent = 'Log your weight and enter your height and age to calculate your BMI.';
+        scale.hidden = true;
         return;
     }
     if (!latestWeight) {
         result.textContent = 'Log your weight to calculate your BMI.';
+        scale.hidden = true;
         return;
     }
     const heightMetres = Number(heightInput.value) / 100;
     const bmi = latestWeight.weight / (heightMetres * heightMetres);
     result.textContent = `Your BMI is ${bmi.toFixed(1)} kg/m², using ${latestWeight.weight} kg recorded on ${parseWorkoutDate(latestWeight.date).toLocaleDateString()}.`;
+    const scaleMin = 15;
+    const scaleMax = 40;
+    const markerPosition = Math.max(0, Math.min(100, ((bmi - scaleMin) / (scaleMax - scaleMin)) * 100));
+    const category = bmi < 18.5 ? 'underweight' : bmi < 25 ? 'healthy weight' : bmi < 30 ? 'overweight' : 'obesity range';
+    marker.style.left = `${markerPosition}%`;
+    scaleTrack.setAttribute('aria-label', `BMI ${bmi.toFixed(1)}, in the ${category} category. Adult BMI scale from 15 to 40.`);
+    valueLabel.textContent = bmi.toFixed(1);
+    scale.hidden = false;
 }
 
 function openWeightHistoryScreen() {
@@ -4351,6 +4406,7 @@ function initializeWorkoutProgram() {
     });
     [bmiHeight, bmiAge].forEach(input => input.addEventListener('input', () => {
         document.getElementById('bmi-result').textContent = 'Select Calculate BMI to update your result.';
+        document.getElementById('bmi-scale').hidden = true;
     }));
     document.addEventListener('keydown', event => {
         if (event.key === 'Escape') {
@@ -4360,6 +4416,7 @@ function initializeWorkoutProgram() {
     });
     document.getElementById('workout-save-plan-btn')?.addEventListener('click', saveNamedWorkoutPlan);
     document.getElementById('workout-switch-plan-btn')?.addEventListener('click', switchToSavedWorkoutPlan);
+    document.getElementById('workout-edit-plan-name-btn')?.addEventListener('click', editSavedWorkoutPlanName);
     document.getElementById('workout-delete-plan-btn')?.addEventListener('click', deleteSavedWorkoutPlan);
     document.getElementById('workout-saved-plans-select')?.addEventListener('change', updateSavedWorkoutPlanControls);
     renderSavedWorkoutPlans();
@@ -5726,9 +5783,7 @@ if (mayaOtter) {
     });
 }
 
-// Start music on first interaction (required by browsers)
+// Retry on user interaction if the browser blocked or interrupted playback.
 document.body.addEventListener('click', () => {
-    if (!isMusicPlaying && musicEnabled) {
-        playMusic();
-    }
-}, { once: true });
+    if (musicEnabled) playMusic();
+});
