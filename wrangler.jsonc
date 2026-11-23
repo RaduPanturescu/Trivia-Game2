@@ -1,0 +1,12 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "trivianight",
+  "compatibility_date": "2026-06-17",
+  "observability": {
+    "enabled": true
+  },
+  // Static Vue build; run `npm run build` first. Hash routing, so no SPA fallback is needed.
+  "assets": {
+    "directory": "./dist"
+  }
+}

@@ -9,8 +9,7 @@
     "preview": "vite preview",
     "typecheck": "vue-tsc -b",
     "lint": "eslint .",
-    "test": "vitest run",
-    "legacy": "vite --config legacy/vite.config.ts"
+    "test": "vitest run"
   },
   "dependencies": {
     "vue": "^3.5.46",

@@ -7,7 +7,7 @@ export default defineConfigWithVueTs(
     name: 'app/files-to-lint',
     files: ['**/*.{ts,mts,tsx,vue}'],
   },
-  globalIgnores(['dist/**', 'legacy/**', 'trivia-game/**', 'public/**']),
+  globalIgnores(['dist/**', 'public/**']),
   pluginVue.configs['flat/recommended'],
   vueTsConfigs.recommended,
 )
