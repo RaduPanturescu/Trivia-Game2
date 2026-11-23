@@ -1,0 +1,92 @@
+/* Card look shared by DifficultyCard and CustomDifficultyCard. Ported from legacy/style.css (minesweeper difficulty carousel). */
+.difficulty-card {
+    position: relative;
+    isolation: isolate;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 11px;
+    width: 100%;
+    min-height: 288px;
+    padding: 42px 24px 58px;
+    overflow: visible;
+    border: 1px solid rgba(160, 149, 255, 0.26);
+    border-radius: 22px;
+    background: linear-gradient(145deg, rgba(42, 37, 75, 0.92), rgba(20, 25, 42, 0.96));
+    color: var(--text-main);
+    text-align: center;
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.22);
+    cursor: pointer;
+    animation: difficultyBob 4.6s ease-in-out infinite;
+    transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+}
+
+.difficulty-card::before {
+    position: absolute;
+    z-index: -1;
+    inset: 18px -8px -8px;
+    border-radius: inherit;
+    background: radial-gradient(ellipse at 50% 45%, rgba(108, 92, 231, 0.3), rgba(0, 206, 201, 0.12) 55%, transparent 76%);
+    content: '';
+    filter: blur(20px);
+    opacity: 0.52;
+    transition: opacity 0.2s ease;
+}
+
+.difficulty-card:hover {
+    transform: translateY(-4px) scale(1.008);
+    border-color: rgba(165, 155, 255, 0.42);
+    background: linear-gradient(145deg, rgba(49, 44, 84, 0.96), rgba(22, 30, 48, 0.98));
+    box-shadow: 0 12px 26px rgba(0, 0, 0, 0.26);
+    animation-play-state: paused;
+}
+
+.difficulty-card:hover::before {
+    opacity: 0.72;
+}
+
+.difficulty-card:focus-visible {
+    outline: 2px solid rgba(0, 206, 201, 0.75);
+    outline-offset: 3px;
+}
+
+.difficulty-name {
+    margin-bottom: 4px;
+    color: #fff;
+    font-size: 1.55rem;
+    font-weight: 800;
+    text-align: center;
+}
+
+.difficulty-play-hint {
+    margin-top: auto;
+    padding-top: 4px;
+    color: #a9a0ff;
+    font-size: 0.82rem;
+    font-weight: 700;
+}
+
+@keyframes difficultyBob {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-5px); }
+}
+
+@media (max-width: 600px), (max-height: 500px) {
+    .difficulty-card {
+        padding-right: 12px;
+        padding-left: 12px;
+    }
+}
+
+/* Sudoku uses a larger title and bottom-aligned select text inside the same carousel. */
+.sudoku-carousel .difficulty-name {
+    font-size: 1.9rem;
+}
+
+.sudoku-carousel .difficulty-select {
+    justify-content: space-between;
+}
+
+.sudoku-carousel .difficulty-select .difficulty-play-hint {
+    margin-top: 0;
+}
