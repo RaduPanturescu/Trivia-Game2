@@ -1,6 +1,10 @@
 import { createRouter, createWebHashHistory } from 'vue-router'
 import WelcomeView from './modules/hub/WelcomeView.vue'
 import ComingSoonView from './modules/hub/ComingSoonView.vue'
+import { routes as minesweeperRoutes } from './modules/minesweeper/routes'
+import { routes as sudokuRoutes } from './modules/sudoku/routes'
+import { routes as puzzlesRoutes } from './modules/puzzles/routes'
+import { routes as wordleRoutes } from './modules/wordle/routes'
 
 declare module 'vue-router' {
   interface RouteMeta {
@@ -27,10 +31,11 @@ export const router = createRouter({
     { path: '/trivia', name: 'trivia', component: ComingSoonView, meta: { title: 'Category Trivia' } },
     { path: '/millionaire', name: 'millionaire', component: ComingSoonView, meta: { title: 'Who Wants to Be a Millionaire' } },
     { path: '/qotd', name: 'qotd', component: ComingSoonView, meta: { title: 'Question of the Day' } },
-    { path: '/minesweeper', name: 'minesweeper', component: ComingSoonView, meta: { title: 'Minesweeper', wide: true } },
-    { path: '/sudoku', name: 'sudoku', component: ComingSoonView, meta: { title: 'Sudoku', wide: true } },
-    { path: '/puzzles', name: 'puzzles', component: ComingSoonView, meta: { title: 'Picture Puzzles', wide: true } },
-    { path: '/wordle', name: 'wordle', component: ComingSoonView, meta: { title: 'Wordle' } },
+    // Each module owns its routes file.
+    ...minesweeperRoutes,
+    ...sudokuRoutes,
+    ...puzzlesRoutes,
+    ...wordleRoutes,
     { path: '/workout', name: 'workout', component: ComingSoonView, meta: { title: 'Workout Program', music: 'workout' } },
     { path: '/:pathMatch(.*)*', redirect: '/' },
   ],

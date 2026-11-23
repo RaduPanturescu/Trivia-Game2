@@ -4,6 +4,7 @@
  */
 export { getStorageAdapter, setStorageAdapter } from './adapter'
 export { createLocalStorageAdapter } from './local'
+export { createIndexedDbCollection, type CollectionStore } from './collection'
 export { stringCodec, booleanCodec, numberCodec, jsonCodec } from './codecs'
 export { STORAGE_KEYS } from './keys'
 export { defineRepository } from './repository'
