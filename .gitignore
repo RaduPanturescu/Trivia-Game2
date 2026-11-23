@@ -1,0 +1,17 @@
+# Build / deps
+node_modules/
+dist/
+.wrangler/
+*.log
+
+# Local AI tooling (skills, agents, instructions) — never committed
+.claude/
+CLAUDE.md
+CLAUDE.local.md
+AGENTS.md
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
