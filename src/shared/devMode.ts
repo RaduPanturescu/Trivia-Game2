@@ -1,6 +1,7 @@
 import { ref, type Ref } from 'vue'
 import { useAchievements } from './achievements'
 import { booleanCodec, defineRepository, STORAGE_KEYS } from './persistence'
+import { defineSingleton } from './singleton'
 
 // shortcut: client-side toy gate, not security; move server-side when auth lands.
 const DEV_PASSWORD = 'raduissexy'
@@ -60,13 +61,8 @@ function createDevMode(): DevModeApi {
   return { ready: store.ready, isDev: store.state, failStreak, tryUnlock, deactivate }
 }
 
-let instance: DevModeApi | undefined
-
 /**
  * Returns the shared developer-mode gate, creating it on first call.
  * @returns The dev-mode API (isDev flag, password attempts, deactivate).
  */
-export function useDevMode(): DevModeApi {
-  instance ??= createDevMode()
-  return instance
-}
+export const useDevMode: () => DevModeApi = defineSingleton(createDevMode)

@@ -1,5 +1,6 @@
 import { effectScope, ref, watch, type Ref } from 'vue'
 import { getStorageAdapter } from './adapter'
+import { defineSingleton } from '../singleton'
 import type { Codec, StorageAdapter } from './types'
 
 /** Definition of one persisted value. */
@@ -27,11 +28,7 @@ export interface Repository<T> {
  * @returns A function returning the shared repository.
  */
 export function defineRepository<T>(options: RepositoryOptions<T>): () => Repository<T> {
-  let instance: Repository<T> | undefined
-  return () => {
-    instance ??= createRepository(options)
-    return instance
-  }
+  return defineSingleton(() => createRepository(options))
 }
 
 /** Builds a repository: loads the stored value, then saves every later change. */

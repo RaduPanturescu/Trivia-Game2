@@ -3,5 +3,5 @@
  */
 export { useAchievements } from './useAchievements'
 export type { AchievementsApi } from './useAchievements'
-export { BUILT_IN_ACHIEVEMENTS } from './definitions'
+export { BUILT_IN_ACHIEVEMENTS, WORKOUT_MILESTONE_ACHIEVEMENTS } from './definitions'
 export type { Achievement, StoredAchievementMap } from './types'

@@ -1,8 +1,9 @@
-import { computed, effectScope, onScopeDispose, ref, watch, type ComputedRef } from 'vue'
+import { computed, onScopeDispose, ref, watch, type ComputedRef } from 'vue'
 import { useDevMode } from '@/shared/devMode'
 import { defineRepository, stringCodec, STORAGE_KEYS, type Codec } from '@/shared/persistence'
 import { shuffle } from '@/shared/quiz'
 import { QOTD_QUESTIONS } from './questions'
+import { defineSingleton } from '@/shared/singleton'
 
 /** A question as shown on screen. The options are already shuffled and `answer` points at the correct one. */
 export interface ShownQuestion {
@@ -115,20 +116,18 @@ function createQotd(): QotdApi {
     now.value = new Date()
   }
 
-  // Detached scope: the timer lives as long as the singleton, not the component that first asked for it.
-  effectScope(true).run(() => {
-    watch(
-      () => locked.value && subscribers.value > 0,
-      (active) => {
-        clearInterval(timer)
-        timer = undefined
-        if (active) {
-          refreshNow()
-          timer = setInterval(refreshNow, 1000)
-        }
-      },
-    )
-  })
+  // The factory runs in a detached scope (see defineSingleton), so this timer outlives the component that first asked for it.
+  watch(
+    () => locked.value && subscribers.value > 0,
+    (active) => {
+      clearInterval(timer)
+      timer = undefined
+      if (active) {
+        refreshNow()
+        timer = setInterval(refreshNow, 1000)
+      }
+    },
+  )
 
   function subscribe(): () => void {
     subscribers.value++
@@ -188,16 +187,11 @@ function createQotd(): QotdApi {
   return { ready, status, countdown, subscribe, currentQuestion, answer, devReset }
 }
 
-let instance: QotdApi | undefined
-
 /**
  * Returns the shared Question of the Day store, creating it on first call.
  * @returns The QotD API (status, countdown, current question, answers and developer reset).
  */
-export function useQotd(): QotdApi {
-  instance ??= createQotd()
-  return instance
-}
+export const useQotd: () => QotdApi = defineSingleton(createQotd)
 
 /**
  * Lock status and countdown for the welcome button. Starts the countdown while the calling component is mounted.

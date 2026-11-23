@@ -1,5 +1,6 @@
 import type { Ref } from 'vue'
 import { defineRepository, jsonCodec, STORAGE_KEYS, type Codec } from '../persistence'
+import { defineSingleton } from '../singleton'
 
 /** Fields every timed leaderboard entry shares (minesweeper and sudoku). */
 export interface LeaderboardEntry {
@@ -50,11 +51,7 @@ const MAX_ENTRIES = 20
  * @returns A function returning the shared {@link TimedLeaderboard}.
  */
 export function defineTimedLeaderboard<E extends LeaderboardEntry>(options: TimedLeaderboardOptions): () => TimedLeaderboard<E> {
-  let instance: TimedLeaderboard<E> | undefined
-  return () => {
-    instance ??= createTimedLeaderboard<E>(options)
-    return instance
-  }
+  return defineSingleton(() => createTimedLeaderboard<E>(options))
 }
 
 /** Builds a leaderboard over its two repositories. */

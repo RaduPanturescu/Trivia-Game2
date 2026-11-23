@@ -1,6 +1,7 @@
 import { computed, watch, type ComputedRef, type Ref } from 'vue'
 import { useAchievements } from './achievements'
 import { defineRepository, getStorageAdapter, jsonCodec, numberCodec, STORAGE_KEYS } from './persistence'
+import { defineSingleton } from './singleton'
 
 /** Trivia categories that can be completed, in legacy order. */
 export const CATEGORY_IDS = ['eu', 'hungary', 'romania', 'trains', 'personal'] as const
@@ -111,13 +112,8 @@ function createProgress(): ProgressApi {
   return { ready, difficulties: difficulties.state, points, markCompleted, resetProfile }
 }
 
-let instance: ProgressApi | undefined
-
 /**
  * Returns the shared trivia progress store, creating it on first call.
  * @returns The progress API (difficulties, points, completion and reset).
  */
-export function useProgress(): ProgressApi {
-  instance ??= createProgress()
-  return instance
-}
+export const useProgress: () => ProgressApi = defineSingleton(createProgress)

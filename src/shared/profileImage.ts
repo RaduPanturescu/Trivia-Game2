@@ -1,5 +1,6 @@
 import type { Ref } from 'vue'
 import { defineRepository, stringCodec, STORAGE_KEYS } from './persistence'
+import { defineSingleton } from './singleton'
 
 /** Avatar shown when the user has not uploaded a photo: a purple circle with a person emoji (legacy SVG). */
 export const DEFAULT_AVATAR =
@@ -56,13 +57,8 @@ function createProfileImage(): ProfileImageApi {
   return { ready: store.ready, image: store.state, setFromFile, remove }
 }
 
-let instance: ProfileImageApi | undefined
-
 /**
  * Returns the shared profile-picture store, creating it on first call.
  * @returns The profile image API (image, upload, remove).
  */
-export function useProfileImage(): ProfileImageApi {
-  instance ??= createProfileImage()
-  return instance
-}
+export const useProfileImage: () => ProfileImageApi = defineSingleton(createProfileImage)

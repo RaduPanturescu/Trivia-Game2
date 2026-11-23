@@ -2,6 +2,7 @@ import { computed, shallowRef, type ComputedRef, type Ref } from 'vue'
 import { parseLocalDate } from './dates'
 import { useAchievements } from './achievements'
 import { defineRepository, getStorageAdapter, STORAGE_KEYS, stringCodec, type Codec, type Repository } from './persistence'
+import { defineSingleton } from './singleton'
 
 /** Default countdown target shown until the user sets one. */
 export const DEFAULT_DAYS_LEFT_TARGET_DATE = '2026-11-27'
@@ -108,13 +109,8 @@ function createWelcomeStats(): WelcomeStatsApi {
   return { ready, mayaClicks: maya.state, clickMaya, setMayaClicks, targetDate, daysLeft, setTargetDate }
 }
 
-let instance: WelcomeStatsApi | undefined
-
 /**
  * Returns the shared welcome-screen stats (Maya clicks and countdown), creating them on first call.
  * @returns The welcome stats API.
  */
-export function useWelcomeStats(): WelcomeStatsApi {
-  instance ??= createWelcomeStats()
-  return instance
-}
+export const useWelcomeStats: () => WelcomeStatsApi = defineSingleton(createWelcomeStats)

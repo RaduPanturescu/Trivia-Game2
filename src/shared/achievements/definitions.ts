@@ -13,3 +13,16 @@ export const BUILT_IN_ACHIEVEMENTS: readonly Achievement[] = [
   { id: 'mayaOverload', name: '⚠️ Maya Overload ⚠️', desc: 'Click Maya until she overloads.', image: '/assets/Maya_achievement.png', unlocked: false },
   { id: 'hackerAttempt', name: "I'm in!", desc: 'Fail to enter the Dev password 5 times in a row.', image: '/assets/hacker_achievement.png', unlocked: false },
 ]
+
+/**
+ * The six fixed workout milestones. Legacy adds them to the achievements map at startup after the custom ones,
+ * so they are listed last. Their stored entry also carries the emoji as `icon`, as legacy wrote it.
+ */
+export const WORKOUT_MILESTONE_ACHIEVEMENTS: readonly Achievement[] = [
+  { id: 'firstWorkout', name: 'First Lift', desc: 'Complete your first workout day.', emoji: '🏆', unlocked: false },
+  { id: 'workout3', name: '3 Exercise Landmark', desc: 'Complete 3 total exercises.', emoji: '💪', unlocked: false },
+  { id: 'workout5', name: '5 Exercise Landmark', desc: 'Complete 5 total exercises.', emoji: '🔥', unlocked: false },
+  { id: 'workout10', name: '10 Exercise Landmark', desc: 'Complete 10 total exercises.', emoji: '⚡', unlocked: false },
+  { id: 'workout15', name: '15 Exercise Landmark', desc: 'Complete 15 total exercises.', emoji: '🌟', unlocked: false },
+  { id: 'workout30', name: '30 Exercise Landmark', desc: 'Complete 30 total exercises.', emoji: '👑', unlocked: false },
+]

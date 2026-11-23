@@ -1,6 +1,7 @@
 import { computed, type ComputedRef } from 'vue'
 import { formatDisplayDate } from '@/shared/dates'
 import { defineRepository, jsonCodec, STORAGE_KEYS } from '@/shared/persistence'
+import { defineSingleton } from '@/shared/singleton'
 
 /** One letter in the mailbox. The built-in letter ships with the app and cannot be deleted. */
 export interface MailLetter {
@@ -105,13 +106,8 @@ function createMail(): MailApi {
   return { ready: stored.ready, letters, badgeCount, canAddLetter, addLetter, removeLetter }
 }
 
-let instance: MailApi | undefined
-
 /**
  * Returns the shared mailbox store, creating it on first call.
  * @returns The mail API (letters, badge count, add and remove).
  */
-export function useMail(): MailApi {
-  instance ??= createMail()
-  return instance
-}
+export const useMail: () => MailApi = defineSingleton(createMail)

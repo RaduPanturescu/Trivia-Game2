@@ -1,5 +1,6 @@
 import { watch, type Ref } from 'vue'
 import { useMusicEnabled, useMusicVolume, useSfxVolume, useSoundEnabled } from '../settings'
+import { defineSingleton } from '../singleton'
 
 /** Background music track: `main` for the trivia screens, `workout` for the workout screens. */
 export type MusicTrack = 'main' | 'workout'
@@ -36,17 +37,12 @@ const MUSIC_SRC: Record<MusicTrack, string> = {
   workout: '/assets/WorkoutMusic.wav',
 }
 
-let api: AudioApi | undefined
-
 /**
  * Returns the app-wide audio controller. The first call creates the audio elements, wires the settings
  * to playback and registers the click retry. Later calls return the same object.
  * @returns The shared {@link AudioApi}.
  */
-export function useAudio(): AudioApi {
-  api ??= createAudio()
-  return api
-}
+export const useAudio: () => AudioApi = defineSingleton(createAudio)
 
 /** Builds the shared controller. Runs once, on the first {@link useAudio} call. */
 function createAudio(): AudioApi {
