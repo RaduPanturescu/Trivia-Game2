@@ -1,0 +1,48 @@
+/* Design tokens: colors (from legacy :root, names unchanged), radius, spacing, font size, transitions. Global rules go in base.css. */
+
+:root {
+    /* Colors: identical names and values to legacy/style.css :root */
+    --bg-color: #0b0c10;
+    --primary: #6c5ce7;
+    --primary-hover: #5a4bcf;
+    --secondary: #00cec9;
+    --accent: #fd79a8;
+    --text-main: #ffffff;
+    --text-muted: #b2bec3;
+    --glass-bg: rgba(255, 255, 255, 0.05);
+    --glass-border: rgba(255, 255, 255, 0.1);
+    --correct: #00b894;
+    --incorrect: #d63031;
+    --shadow-neon: 0 0 15px rgba(108, 92, 231, 0.5);
+    --volume-track: rgba(108, 15, 29, 0.65);
+    --volume-track-active: rgba(171, 32, 52, 0.9);
+    --volume-thumb: #c84b58;
+
+    /* Font. Legacy: 'Outfit', sans-serif (6 uses) */
+    --font-family: 'Outfit', sans-serif;
+
+    /* Border radius. Legacy border-radius uses: 10px (17), 12px (20), 14px (9), 999px (12) */
+    --radius-sm: 10px;
+    --radius-md: 12px;
+    --radius-lg: 14px;
+    --radius-pill: 999px;
+
+    /* Spacing. Legacy gap uses: 4px (10), 6px (8), 8px (36), 10px (21), 12px (21), 16px (7) */
+    --space-1: 4px;
+    --space-2: 6px;
+    --space-3: 8px;
+    --space-4: 10px;
+    --space-5: 12px;
+    --space-6: 16px;
+
+    /* Font size. Legacy font-size uses: 0.78rem (11), 1rem (11), 1.1rem (13), 1.2rem (7), 2rem (10) */
+    --font-size-sm: 0.78rem;
+    --font-size-md: 1rem;
+    --font-size-lg: 1.1rem;
+    --font-size-xl: 1.2rem;
+    --font-size-2xl: 2rem;
+
+    /* Transitions. Legacy durations: 0.2s ease (18), 0.3s ease (15) */
+    --transition-fast: 0.2s ease;
+    --transition-base: 0.3s ease;
+}

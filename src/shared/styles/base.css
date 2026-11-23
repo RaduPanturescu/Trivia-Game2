@@ -1,0 +1,55 @@
+/* Global rules only: reset, body, #app container, global button. Screen and component classes stay with their components. */
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: var(--font-family);
+}
+
+body {
+    background: radial-gradient(circle at 50% -20%, #2d3436, var(--bg-color) 80%);
+    color: var(--text-main);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    overflow: hidden;
+}
+
+/* App Container - Mobile App size restriction for that vertical feel */
+#app {
+    width: 100%;
+    max-width: 480px;
+    height: 100vh;
+    max-height: 900px;
+    position: relative;
+    background: linear-gradient(135deg, rgba(20, 15, 38, 0.9), rgba(15, 10, 28, 0.95));
+    box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+    overflow: hidden;
+}
+
+/* At desktop sizes, give it some rounded corners */
+@media (min-width: 481px) {
+    #app {
+        height: 90vh;
+        border-radius: 30px;
+        border: 1px solid var(--glass-border);
+    }
+
+    /* Slightly wider layout for Minesweeper and Sudoku special screens */
+    #app.wide {
+        max-width: 1040px;
+    }
+}
+
+/* Buttons */
+button {
+    cursor: pointer;
+    border: none;
+    outline: none;
+    background: transparent;
+    font-family: var(--font-family);
+    color: var(--text-main);
+    transition: all var(--transition-base);
+}
