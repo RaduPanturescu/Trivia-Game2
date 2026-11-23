@@ -1,6 +1,9 @@
 import { createRouter, createWebHashHistory } from 'vue-router'
 import WelcomeView from './modules/hub/WelcomeView.vue'
 import ComingSoonView from './modules/hub/ComingSoonView.vue'
+import { routes as triviaRoutes } from './modules/trivia/routes'
+import { routes as millionaireRoutes } from './modules/millionaire/routes'
+import { routes as qotdRoutes } from './modules/qotd/routes'
 import { routes as minesweeperRoutes } from './modules/minesweeper/routes'
 import { routes as sudokuRoutes } from './modules/sudoku/routes'
 import { routes as puzzlesRoutes } from './modules/puzzles/routes'
@@ -28,10 +31,10 @@ export const router = createRouter({
     { path: '/hub', name: 'hub', component: () => import('./modules/hub/GameHubView.vue') },
     { path: '/settings', name: 'settings', component: () => import('./modules/hub/SettingsView.vue') },
     { path: '/profile', name: 'profile', component: () => import('./modules/hub/ProfileView.vue') },
-    { path: '/trivia', name: 'trivia', component: ComingSoonView, meta: { title: 'Category Trivia' } },
-    { path: '/millionaire', name: 'millionaire', component: ComingSoonView, meta: { title: 'Who Wants to Be a Millionaire' } },
-    { path: '/qotd', name: 'qotd', component: ComingSoonView, meta: { title: 'Question of the Day' } },
     // Each module owns its routes file.
+    ...triviaRoutes,
+    ...millionaireRoutes,
+    ...qotdRoutes,
     ...minesweeperRoutes,
     ...sudokuRoutes,
     ...puzzlesRoutes,

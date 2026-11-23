@@ -49,6 +49,14 @@ describe('useProgress', () => {
     expect(localStorage.getItem('triviaPoints')).toBe('1')
   })
 
+  it('stores a personal completion (no difficulty) under the legacy null key', async () => {
+    const progress = await setup()
+    progress.markCompleted('personal', null)
+    expect(progress.points.value).toBe(1)
+    await settle()
+    expect(JSON.parse(localStorage.getItem('triviaDifficulties') ?? '{}').personal.null).toBe(true)
+  })
+
   it('resets difficulties, achievements and question-of-the-day keys', async () => {
     const progress = await setup({
       triviaDifficulties: JSON.stringify({ eu: { easy: true, medium: true, hard: true, expert: true } }),

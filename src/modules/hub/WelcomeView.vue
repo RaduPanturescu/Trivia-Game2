@@ -5,6 +5,7 @@ import { useRouter } from 'vue-router'
 import { AppButton, AppScreen } from '@/shared/components'
 import { SFX, useAudio } from '@/shared/composables/useAudio'
 import { useToast } from '@/shared/composables/useToast'
+import { useQotdStatus } from '@/modules/qotd'
 import { useDevMode } from '@/shared/devMode'
 import { useProfileImage } from '@/shared/profileImage'
 import { useProgress } from '@/shared/progress'
@@ -22,8 +23,7 @@ const { badgeCount: mailCount } = useMail()
 const { points } = useProgress()
 const { daysLeft, mayaClicks, clickMaya: countMayaClick } = useWelcomeStats()
 
-// shortcut: real QotD countdown arrives with the qotd module (phase 3).
-const qotdTimer = 'Available Now!'
+const { status: qotdStatus, countdown: qotdCountdown } = useQotdStatus()
 
 const mailOpen = ref(false)
 /** Welcome stat open in the developer editor, or `null` when the editor is closed. */
@@ -150,9 +150,11 @@ function clickMaya(): void {
       </AppButton>
       <AppButton
         class="welcome-nav qotd-welcome-btn"
+        :class="{ locked: qotdStatus === 'locked' }"
+        :disabled="qotdStatus === 'locked'"
         @click="go('/qotd')"
       >
-        <span>❓ Question of the Day</span><span class="qotd-timer">{{ qotdTimer }}</span>
+        <span>❓ Question of the Day</span><span class="qotd-timer">{{ qotdCountdown }}</span>
       </AppButton>
       <AppButton
         class="welcome-nav workout-btn"
@@ -361,6 +363,15 @@ function clickMaya(): void {
   color: #b9fff0;
   font-size: 0.72rem;
   font-weight: 700;
+}
+
+/* Legacy `.locked`: dimmed, no hover lift. */
+.welcome .welcome-actions .qotd-welcome-btn.locked,
+.welcome .welcome-actions .qotd-welcome-btn.locked:hover {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
 }
 
 .welcome .welcome-actions .workout-btn {

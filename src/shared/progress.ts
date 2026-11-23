@@ -14,8 +14,8 @@ export const DIFFICULTIES = ['easy', 'medium', 'hard', 'expert'] as const
 /** One difficulty level of a trivia category. */
 export type Difficulty = (typeof DIFFICULTIES)[number]
 
-/** Completion flag for every category and difficulty. */
-export type CompletionMap = Record<CategoryId, Record<Difficulty, boolean>>
+/** Completion flag for every category and difficulty. The `'null'` key is the legacy flag for the personal category, which has no difficulty. */
+export type CompletionMap = Record<CategoryId, Partial<Record<Difficulty | 'null', boolean>>>
 
 /** Public surface of the trivia progress store. */
 export interface ProgressApi {
@@ -25,8 +25,8 @@ export interface ProgressApi {
   difficulties: Ref<CompletionMap>
   /** Total points: completed difficulties plus one for the millionaire achievement. */
   points: ComputedRef<number>
-  /** Marks one category and difficulty as completed. */
-  markCompleted(category: CategoryId, difficulty: Difficulty): void
+  /** Marks one category and difficulty as completed. `null` is the personal category, stored under the legacy `'null'` key. */
+  markCompleted(category: CategoryId, difficulty: Difficulty | null): void
   /** Clears trivia progress and achievements, and removes the question-of-the-day keys. */
   resetProfile(): Promise<void>
 }
@@ -94,8 +94,8 @@ function createProgress(): ProgressApi {
     })
   })
 
-  function markCompleted(category: CategoryId, difficulty: Difficulty): void {
-    difficulties.state.value[category][difficulty] = true
+  function markCompleted(category: CategoryId, difficulty: Difficulty | null): void {
+    difficulties.state.value[category][difficulty ?? 'null'] = true
   }
 
   async function resetProfile(): Promise<void> {
