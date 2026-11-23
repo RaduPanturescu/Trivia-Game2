@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="puzzle.css">
     <link rel="stylesheet" href="wordle.css">
+    <link rel="stylesheet" href="exercise-stats.css?v=15">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
 </head>
 <body>
@@ -112,7 +113,7 @@
                     </label>
                     <label class="mail-field">
                         <span>Issue date</span>
-                        <input id="mail-date-input" type="date" />
+                        <input id="mail-date-input" type="text" inputmode="numeric" placeholder="DD/MM/YYYY" maxlength="10" data-display-date />
                     </label>
                 </div>
                 <button id="mail-submit-btn" class="primary-btn" type="button">Add Letter</button>
@@ -151,6 +152,7 @@
                     <button id="workout-dashboard-btn" class="workout-menu-card" type="button"><strong>Dashboard</strong><small>View and manage your program</small></button>
                     <button id="workout-now-btn" class="workout-menu-card" type="button"><strong>Workout Now</strong><span id="workout-now-day-status" class="workout-day-status">Checking today</span></button>
                     <button id="workout-health-btn" class="workout-menu-card" type="button"><strong>Health Stats</strong></button>
+                    <button id="workout-exercise-stats-btn" class="workout-menu-card" type="button"><strong>Exercise Stats</strong></button>
                 </div>
             </div>
         </div>
@@ -163,6 +165,87 @@
                 <p id="workout-now-date" class="subtitle"></p>
                 <p id="workout-now-estimate" class="workout-now-estimate" hidden></p>
                 <div id="workout-now-list"></div>
+            </div>
+        </div>
+
+        <div id="exercise-stats-screen" class="screen exercise-stats-screen">
+            <button id="exercise-stats-back-btn" class="back-btn" type="button" aria-label="Back to workout menu">←</button>
+            <div id="exercise-stats-panel" class="exercise-stats-content">
+                        <h2 class="screen-title">Exercise Stats</h2>
+                        <div class="exercise-stats-intro"><div><h3>Track progress and plan balance.</h3></div></div>
+                        <section class="exercise-stats-card">
+                            <div class="exercise-stats-heading"><div><span class="exercise-stats-kicker">TRAINING COVERAGE</span><h4>Muscle groups &amp; fitness</h4></div><div class="exercise-coverage-mode" role="group" aria-label="Coverage period"><button id="exercise-coverage-plan" class="chip-btn active" type="button" aria-pressed="true">Weekly plan</button><button id="exercise-coverage-all-time" class="chip-btn" type="button" aria-pressed="false">All time</button></div></div>
+                            <p id="exercise-coverage-help" class="exercise-stats-help">Planned sets per area. Each chart scales to its highest value, not training quality.</p>
+                            <div id="exercise-coverage-navigation" class="exercise-coverage-navigation"><button id="exercise-coverage-prev" class="chip-btn" type="button">← Previous week</button><button id="exercise-coverage-current" class="chip-btn" type="button">This week</button><button id="exercise-coverage-next" class="chip-btn" type="button">Next week →</button><span id="exercise-coverage-week" class="exercise-stats-badge"></span></div>
+                            <div class="exercise-coverage-layout"><div id="exercise-coverage-chart"></div><div id="exercise-coverage-list" class="exercise-coverage-list"></div></div>
+                            <div id="exercise-plan-list" class="exercise-plan-list"></div>
+                            <p id="exercise-coverage-unassigned" class="exercise-stats-help"></p>
+                            <details class="exercise-assignment"><summary>Review or change exercises and areas</summary><p class="exercise-stats-help">Area assignments apply to exercises with the same name.</p><label for="exercise-area-select">Exercise</label><select id="exercise-area-select"></select><div id="exercise-area-options" class="exercise-area-options"></div><div class="exercise-area-actions"><button id="exercise-area-save" class="mini-btn" type="button">Save areas</button><button id="exercise-area-reset" class="mini-btn" type="button">Use automatic areas</button></div>
+                                <form id="exercise-review-form" class="exercise-stats-form exercise-review-form">
+                                    <div class="exercise-stats-wide"><h4>Manage planned exercises</h4><p class="exercise-stats-help">Add or edit a day’s exercise. Future changes update its recurring plan.</p></div>
+                                    <label>Day<select id="exercise-review-day" required></select></label>
+                                    <label>Exercise to edit<select id="exercise-review-existing"><option value="">＋ Add new exercise</option></select></label>
+                                    <label>Exercise name<input id="exercise-review-name" maxlength="80" required placeholder="e.g. Squat"></label>
+                                    <label>Sets<input id="exercise-review-sets" type="number" min="1" max="100" step="1" value="3" required></label>
+                                    <label>Reps<input id="exercise-review-reps" type="number" min="1" max="1000" step="1" value="10" required></label>
+                                    <label class="exercise-review-check"><input id="exercise-review-failure" type="checkbox"> Reps until failure</label>
+                                    <label>Load (kg)<input id="exercise-review-weight" type="number" min="0" max="2000" step="any" value="0" required></label>
+                                    <label>Type<select id="exercise-review-type"><option value="bodyweight">Bodyweight</option><option value="weighted">Weighted</option></select></label>
+                                    <div class="exercise-stats-wide"><p id="exercise-review-message" class="exercise-stats-help" aria-live="polite"></p><button id="exercise-review-save" class="mini-btn exercise-stats-primary" type="submit">＋ Add to day</button></div>
+                                </form>
+                            </details>
+                        </section>
+                        <section class="exercise-stats-card">
+                            <span class="exercise-stats-kicker">TRAINING LOG</span>
+                            <div class="exercise-log-start"><button id="exercise-log-open" class="mini-btn exercise-stats-primary" type="button">＋ Log Exercise</button></div>
+                            <form id="exercise-log-form" class="exercise-stats-form" hidden>
+                                <label>Exercise<span class="exercise-suggestion-wrap"><input id="exercise-log-name" maxlength="80" required placeholder="e.g. Bench Press" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="exercise-log-suggestions"><span id="exercise-log-suggestions" class="exercise-suggestions" role="listbox" hidden></span></span></label>
+                                <div id="exercise-log-name-actions" class="exercise-log-name-actions"><button id="exercise-log-continue" class="mini-btn exercise-stats-primary" type="button" disabled>Continue</button><button id="exercise-log-cancel" class="mini-btn" type="button">Cancel</button></div>
+                                <fieldset id="exercise-log-details" class="exercise-log-details exercise-stats-wide" hidden disabled>
+                                <label>Type<select id="exercise-log-type"><option value="weights">Weight exercises</option><option value="calisthenics">Calisthenics</option></select></label>
+                                <label>Date<input id="exercise-log-date" type="text" inputmode="numeric" placeholder="DD/MM/YYYY" maxlength="10" data-display-date required></label>
+                                <label>Sets<input id="exercise-log-sets" type="number" min="1" max="100" step="1" value="1" required></label>
+                                <label>Reps<input id="exercise-log-reps" type="number" min="1" max="1000" step="1" required></label>
+                                <label>Load (kg)<input id="exercise-log-weight" type="number" min="0" max="2000" step="any" value="0" required></label>
+                                <label class="exercise-stats-wide">Notes / variation (optional)<input id="exercise-log-notes" maxlength="200" placeholder="Range of motion, tempo, assistance…"></label>
+                                <div class="exercise-stats-wide exercise-area-actions"><button class="mini-btn exercise-stats-primary" type="submit">＋ Save performance</button><button id="exercise-log-cancel-details" class="mini-btn" type="button">Cancel</button></div>
+                                </fieldset>
+                            </form>
+                        </section>
+                        <div class="exercise-history-grid"><section class="exercise-stats-card"><span class="exercise-stats-kicker">BODYWEIGHT</span><h4>Calisthenics</h4><div id="exercise-history-calisthenics"></div></section><section class="exercise-stats-card"><span class="exercise-stats-kicker">STRENGTH</span><h4>Weight exercises</h4><div id="exercise-history-weights"></div></section></div>
+                        <section class="exercise-stats-card">
+                            <span class="exercise-stats-kicker">STRENGTH BENCHMARKS</span><h4 class="exercise-max-subheading">1 REP MAX</h4>
+                            <div class="exercise-log-start"><button id="exercise-max-open" class="mini-btn exercise-stats-primary" type="button">＋ Log 1 Rep Max</button></div>
+                            <form id="exercise-max-form" class="exercise-stats-form" hidden>
+                                <label>Lift<span class="exercise-suggestion-wrap"><input id="exercise-max-name" maxlength="80" required placeholder="e.g. Squat" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="exercise-max-suggestions"><span id="exercise-max-suggestions" class="exercise-suggestions" role="listbox" hidden></span></span></label>
+                                <div id="exercise-max-name-actions" class="exercise-log-name-actions"><button id="exercise-max-continue" class="mini-btn exercise-stats-primary" type="button" disabled>Continue</button><button id="exercise-max-cancel" class="mini-btn" type="button">Cancel</button></div>
+                                <fieldset id="exercise-max-details" class="exercise-log-details exercise-stats-wide" hidden disabled>
+                                    <label>1RM kg<input id="exercise-max-weight" type="number" min="0.01" max="2000" step="any"></label>
+                                    <label>Test date<input id="exercise-max-date" type="text" inputmode="numeric" placeholder="DD/MM/YYYY" maxlength="10" data-display-date required></label>
+                                    <div class="exercise-stats-wide exercise-area-actions"><button class="mini-btn exercise-stats-primary" type="submit">＋ Add / record lift</button><button id="exercise-max-cancel-details" class="mini-btn" type="button">Cancel</button></div>
+                                </fieldset>
+                            </form>
+                            <div id="exercise-max-list" class="exercise-max-list"></div>
+                        </section>
+                        <section class="exercise-stats-card">
+                            <span class="exercise-stats-kicker">CARDIO TRACKER</span>
+                            <h4 class="exercise-max-subheading">Running</h4>
+                            <div class="exercise-log-start"><button id="cardio-run-open" class="mini-btn exercise-stats-primary" type="button">＋ Log a run</button></div>
+                            <form id="cardio-run-form" class="exercise-stats-form" hidden>
+                                <label>Run date<input id="cardio-run-date" type="text" inputmode="numeric" placeholder="DD/MM/YYYY" maxlength="10" data-display-date required></label>
+                                <label>Distance (km)<input id="cardio-run-distance" type="number" min="0.01" max="1000" step="0.01" required></label>
+                                <label>Run time (HH:MM:SS)<input id="cardio-run-duration" type="text" placeholder="00:45:30" maxlength="9" required></label>
+                                <label>Run type<select id="cardio-run-type"><option value="easy">Easy</option><option value="long">Long run</option><option value="tempo">Tempo</option><option value="interval">Intervals</option><option value="race">Race</option></select></label>
+                                <label>Elevation gain (m)<input id="cardio-run-elevation" type="number" min="0" max="100000" step="1"></label>
+                                <label>Average heart rate<input id="cardio-run-hr" type="number" min="30" max="250" step="1"></label>
+                                <label>Cadence (spm)<input id="cardio-run-cadence" type="number" min="1" max="300" step="1"></label>
+                                <label>Effort / RPE (1–10)<input id="cardio-run-rpe" type="number" min="1" max="10" step="1"></label>
+                                <label class="exercise-stats-wide">Route / notes (optional)<input id="cardio-run-notes" maxlength="240" placeholder="Route, weather, shoe, how it felt…"></label>
+                                <div class="exercise-stats-wide exercise-area-actions"><button class="mini-btn exercise-stats-primary" type="submit">＋ Save run</button><button id="cardio-run-cancel" class="mini-btn" type="button">Cancel</button></div>
+                            </form>
+                            <div id="cardio-run-summary" class="cardio-run-summary"></div>
+                            <div id="cardio-run-list" class="cardio-run-list"></div>
+                        </section>
             </div>
         </div>
 
@@ -345,7 +428,7 @@
                     <input id="workout-weight-input" type="number" min="1" max="500" step="0.1" inputmode="decimal" required />
                     <div id="workout-weight-date-control" class="workout-weight-date-control" hidden>
                         <label for="workout-weight-date">Entry date</label>
-                        <input id="workout-weight-date" type="date" />
+                        <input id="workout-weight-date" type="text" inputmode="numeric" placeholder="DD/MM/YYYY" maxlength="10" data-display-date />
                     </div>
                     <div class="workout-weight-entry-actions">
                         <button class="primary-btn small-btn" type="submit">Save weight</button>
@@ -503,7 +586,7 @@
                 <!-- Option buttons generated by JS -->
             </div>
 
-            <button id="next-btn" class="primary-btn hidden">Continue to Next Question</button>
+            <button id="next-btn" class="primary-btn hidden"">Continue to Next Question</button>
         </div>
 
         <!-- Millionaire Title Screen -->
@@ -1043,14 +1126,16 @@
     </audio>
     
     <!-- Data and Logic -->
+    <script src="dates.js"></script>
     <script src="questions.js?v=2"></script>
     <script src="questions-season2.js?v=1"></script>
     <script src="qotd-season2.js?v=1"></script>
-    <script src="minesweeper.js?v=2"></script>
-    <script src="sudoku.js?v=2"></script>
-    <script src="app.js?v=3"></script>
+    <script src="minesweeper.js?v=3"></script>
+    <script src="sudoku.js?v=3"></script>
+    <script src="app.js?v=5"></script>
+    <script src="exercise-stats.js?v=15"></script>
     <script src="puzzle.js?v=2"></script>
     <script src="wordle-words.js?v=3"></script>
-    <script src="wordle.js?v=4"></script>
+    <script src="wordle.js?v=5"></script>
 </body>
 </html>

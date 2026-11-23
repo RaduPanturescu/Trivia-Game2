@@ -188,7 +188,7 @@
                     cells[row][column].classList.add('filled');
                 }
             });
-            dailyStatus.textContent = state.dev ? 'Developer Mode · unlimited puzzles' : `Daily puzzle · ${state.date} (UTC)`;
+            dailyStatus.textContent = state.dev ? 'Developer Mode · unlimited puzzles' : `Daily puzzle · ${formatDisplayDate(state.date)} (UTC)`;
             message.textContent = 'Type a five-letter word and press Enter.';
         } else if (state.result === 'won') {
             dailyStatus.textContent = state.dev ? 'Developer puzzle complete' : 'Completed for today ✓';

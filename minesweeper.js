@@ -324,7 +324,7 @@ function recordMinesweeperLeaderboardEntry() {
         rows: minesweeperState.rows,
         cols: minesweeperState.cols,
         time: minesweeperState.time,
-        date: new Date().toLocaleString()
+        date: new Date().toISOString()
     };
     entries.push(entry);
     entries.sort((a, b) => a.time - b.time);
@@ -363,7 +363,7 @@ function renderMinesweeperLeaderboard() {
                 ? `Custom (${entry.cols}×${entry.rows})`
                 : minesweeperSizes[entry.difficulty]?.label || entry.difficulty}</div>
             <div>${formatTime(entry.time)}</div>
-            <div>${entry.date}</div>
+            <div>${formatLeaderboardDate(entry.date)}</div>
         </div>
     `).join('');
 }

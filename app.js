@@ -32,6 +32,7 @@ const screens = {
     workoutMenu: document.getElementById('workout-menu-screen'),
     workoutNow: document.getElementById('workout-now-screen'),
     workout: document.getElementById('workout-screen'),
+    exerciseStats: document.getElementById('exercise-stats-screen'),
     weightHistory: document.getElementById('weight-history-screen'),
     millionaireTitle: document.getElementById('millionaire-title-screen'),
     millionaireName: document.getElementById('millionaire-name-screen'),
@@ -317,11 +318,7 @@ function formatMailDate(dateString) {
         ? new Date(`${dateString}T12:00:00`)
         : new Date(dateString);
     if (Number.isNaN(date.getTime())) return dateString;
-    return new Intl.DateTimeFormat('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric'
-    }).format(date);
+    return formatDisplayDate(date);
 }
 
 function openMailOverlay() {
@@ -394,7 +391,7 @@ async function handleMailSubmit() {
 
     const coverFile = mailCoverInput.files && mailCoverInput.files[0];
     const insideFile = mailInsideInput.files && mailInsideInput.files[0];
-    const issueDate = mailDateInput.value;
+    const issueDate = validateDisplayDate(mailDateInput);
 
     if (!coverFile || !insideFile || !issueDate) {
         alert('Please upload both images and add the issue date.');
@@ -447,7 +444,7 @@ function shuffle(array) {
 
 // Screen Transitions
 function showScreen(screenName) {
-    if (workoutMusicActive && !['workoutMenu', 'workout', 'workoutNow', 'weightHistory'].includes(screenName)) {
+    if (workoutMusicActive && !['workoutMenu', 'workout', 'workoutNow', 'exerciseStats', 'weightHistory'].includes(screenName)) {
         pauseWorkoutClocks();
     }
     syncWorkoutMusic(screenName);
@@ -477,7 +474,7 @@ function showScreen(screenName) {
         // Toggle app width for larger game screens
         const appEl = document.getElementById('app');
         if (appEl) {
-            const wideScreens = ['minesweeper', 'minesweeperSize', 'sudoku', 'sudokuSize', 'puzzle', 'weightHistory'];
+            const wideScreens = ['minesweeper', 'minesweeperSize', 'sudoku', 'sudokuSize', 'puzzle', 'weightHistory', 'exerciseStats'];
             if (wideScreens.includes(screenName)) appEl.classList.add('wide');
             else appEl.classList.remove('wide');
         }
@@ -1301,7 +1298,7 @@ sfxVolumeSlider.addEventListener('input', (e) => {
 });
 
 function syncWorkoutMusic(screenName) {
-    const isWorkoutScreen = ['workoutMenu', 'workout', 'workoutNow', 'weightHistory'].includes(screenName);
+    const isWorkoutScreen = ['workoutMenu', 'workout', 'workoutNow', 'exerciseStats', 'weightHistory'].includes(screenName);
     if (isWorkoutScreen !== workoutMusicActive) {
         workoutMusicActive = isWorkoutScreen;
         (isWorkoutScreen ? bgMusic : workoutMusic).pause();
@@ -1892,6 +1889,13 @@ function saveWorkoutData() {
         weeks: workoutState.weeks
     };
     localStorage.setItem('triviaWorkoutProgram', JSON.stringify(payload));
+    if (typeof syncCompletedExerciseLogs === 'function') {
+        syncCompletedExerciseLogs();
+        if (typeof renderExerciseCoverage === 'function') {
+            exerciseCoverageSignature = '';
+            renderExerciseCoverage();
+        }
+    }
 }
 
 function getSavedWorkoutPlans() {
@@ -1993,7 +1997,7 @@ function switchToSavedWorkoutPlan() {
 }
 
 function resetWorkoutStats() {
-    if (!confirm('Reset workout stats and clear the current workout schedule? Your other app progress and saved workout plans will be kept.')) return;
+    if (!confirm('Reset workout stats, exercise logs, 1RM records and exercise area assignments, and clear the current workout schedule? Your other app progress and saved workout plans will be kept.')) return;
 
     const savedAchievements = (() => {
         try {
@@ -2025,6 +2029,7 @@ function resetWorkoutStats() {
     localStorage.setItem('triviaWorkoutProgramStartDate', today);
     localStorage.removeItem('triviaWorkoutProgram');
     localStorage.removeItem('triviaWorkoutMetricBaseline');
+    localStorage.removeItem('triviaExerciseStatsV1');
     sessionStorage.setItem('triviaResetToWorkoutDashboard', 'true');
     window.location.reload();
 }
@@ -2134,9 +2139,7 @@ function estimateWorkoutMinutes(exercises) {
 function renderWorkoutNow() {
     const today = new Date();
     const day = getTodayWorkoutDay(today);
-    document.getElementById('workout-now-date').textContent = today.toLocaleDateString(undefined, {
-        weekday: 'long', month: 'long', day: 'numeric', year: 'numeric'
-    });
+    document.getElementById('workout-now-date').textContent = formatDisplayDate(today);
     const estimate = document.getElementById('workout-now-estimate');
     estimate.hidden = day?.type !== 'workout' || !day.exercises?.length;
     if (!estimate.hidden) {
@@ -3023,7 +3026,7 @@ function renderWorkoutWeightButton() {
     if (!button) return;
     const latestEntry = getBodyWeightEntries().at(-1);
     button.textContent = latestEntry ? `${latestEntry.weight} kg` : 'Your weight';
-    button.title = latestEntry ? `Last recorded ${latestEntry.date}` : 'Record your weight';
+    button.title = latestEntry ? `Last recorded ${formatDisplayDate(latestEntry.date)}` : 'Record your weight';
 }
 
 function openWorkoutWeightEntry() {
@@ -3038,8 +3041,9 @@ function openWorkoutWeightEntry() {
     const isAdmin = isDeveloperMode();
     const today = isoDate(new Date());
     if (dateInput) {
-        dateInput.value = today;
-        dateInput.max = today;
+        dateInput.value = formatDisplayDate(today);
+        dateInput.dataset.maxDate = today;
+        validateDisplayDate(dateInput);
     }
     if (dateControl) dateControl.hidden = !isAdmin;
     const entryForToday = getBodyWeightEntries().find(entry => entry.date === today);
@@ -3070,7 +3074,7 @@ function saveWorkoutWeightEntry(event) {
     }
 
     const date = isDeveloperMode()
-        ? document.getElementById('workout-weight-date')?.value
+        ? validateDisplayDate(document.getElementById('workout-weight-date'))
         : isoDate(new Date());
     if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date) || date > isoDate(new Date())) {
         alert('Choose a valid date that is not in the future.');
@@ -3150,7 +3154,7 @@ function renderWeightHistoryGraph() {
         const y = yFor(entry.weight);
         const circle = addSvgElement('circle', { cx: x, cy: y, r: 5, class: 'weight-chart-point' });
         const title = document.createElementNS(svgNs, 'title');
-        title.textContent = `${new Date(`${entry.date}T00:00:00`).toLocaleDateString()}: ${entry.weight} kg`;
+        title.textContent = `${formatDisplayDate(entry.date)}: ${entry.weight} kg`;
         circle.appendChild(title);
         circle.setAttribute('tabindex', '0');
         circle.setAttribute('role', 'img');
@@ -3176,9 +3180,7 @@ function renderWeightHistoryGraph() {
         dateLabel.setAttribute('x', '11');
         dateLabel.setAttribute('y', '36');
         dateLabel.setAttribute('class', 'weight-chart-tooltip-date');
-        dateLabel.textContent = new Date(`${entry.date}T00:00:00`).toLocaleDateString(undefined, {
-            month: 'short', day: 'numeric', year: 'numeric'
-        });
+        dateLabel.textContent = formatDisplayDate(entry.date);
         tooltip.append(tooltipBackground, weightLabel, dateLabel);
         svg.appendChild(tooltip);
         const showTooltip = () => tooltip.setAttribute('visibility', 'visible');
@@ -3200,7 +3202,7 @@ function renderWeightHistoryGraph() {
             x: xFor(index), y: plot.bottom + 25,
             'text-anchor': index === 0 ? 'start' : index === entries.length - 1 ? 'end' : 'middle',
             class: 'weight-chart-label'
-        }, date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }));
+        }, formatDisplayDate(date));
     });
     addSvgElement('text', { x: (plot.left + plot.right) / 2, y: 420, 'text-anchor': 'middle', class: 'weight-chart-axis-title' }, 'Date');
     const yTitle = addSvgElement('text', {
@@ -3219,7 +3221,7 @@ function renderWeightHistoryStats() {
     const firstWorkoutDate = getFirstWorkoutDate();
     const rows = [
         ['First workout', firstWorkoutDate
-            ? new Date(`${firstWorkoutDate}T00:00:00`).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })
+            ? formatDisplayDate(firstWorkoutDate)
             : 'Not started'],
         ['Workout streak', `${stats.streak} days`],
         ['Completed workouts', stats.workouts],
@@ -3276,7 +3278,7 @@ function renderBmiResult() {
     }
     const heightMetres = Number(heightInput.value) / 100;
     const bmi = latestWeight.weight / (heightMetres * heightMetres);
-    result.textContent = `Your BMI is ${bmi.toFixed(1)} kg/m², using ${latestWeight.weight} kg recorded on ${parseWorkoutDate(latestWeight.date).toLocaleDateString()}.`;
+    result.textContent = `Your BMI is ${bmi.toFixed(1)} kg/m², using ${latestWeight.weight} kg recorded on ${formatDisplayDate(latestWeight.date)}.`;
     const scaleMin = 15;
     const scaleMax = 40;
     const markerPosition = Math.max(0, Math.min(100, ((bmi - scaleMin) / (scaleMax - scaleMin)) * 100));
@@ -3933,7 +3935,7 @@ function renderWorkoutCalendar() {
         const statusEmoji = isMissed ? '✕' : isRest ? '💤' : isDone ? '✓' : isUntracked ? '—' : isWorkout ? '💪' : '·';
         cell.className = `calendar-cell ${isNullDay ? 'null-day' : ''} ${isDone ? 'done' : ''} ${isWorkout ? 'workout-day' : ''} ${isRest ? 'rest-day' : ''} ${isMissed ? 'missed' : ''} ${matchingDay?.date === getCurrentWorkoutDay().date ? 'active' : ''}`;
         cell.innerHTML = `<span class="calendar-date">${day}</span><span class="calendar-emoji">${statusEmoji}</span>`;
-        cell.setAttribute('aria-label', `${date.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}. ${isMissed ? 'Missed workout' : isRest ? 'Rest day' : isDone ? 'Completed workout' : isUntracked ? 'Workout day, no recorded status' : isWorkout ? 'Scheduled workout' : 'No workout status'}. Click to edit status.`);
+        cell.setAttribute('aria-label', `${formatDisplayDate(date)}. ${isMissed ? 'Missed workout' : isRest ? 'Rest day' : isDone ? 'Completed workout' : isUntracked ? 'Workout day, no recorded status' : isWorkout ? 'Scheduled workout' : 'No workout status'}. Click to edit status.`);
         cell.addEventListener('click', () => {
             openWorkoutCalendarStatusEditor(date);
         });
@@ -3946,7 +3948,7 @@ function openWorkoutCalendarStatusEditor(date) {
     const overlay = document.getElementById('workout-calendar-status-overlay');
     const dateLabel = document.getElementById('workout-calendar-status-date');
     if (!overlay || !dateLabel) return;
-    dateLabel.textContent = date.toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' });
+    dateLabel.textContent = formatDisplayDate(date);
     overlay.hidden = false;
     syncWorkoutOverlayScrollLock();
     overlay.querySelector('[data-calendar-status]')?.focus();
@@ -4255,7 +4257,7 @@ function renderWorkoutPlanner() {
         const start = parseWorkoutDate(week.weekStart);
         const end = new Date(start);
         end.setDate(start.getDate() + 6);
-        label.textContent = `${start.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} - ${end.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}`;
+        label.textContent = `${formatDisplayDate(start)} - ${formatDisplayDate(end)}`;
     }
 
     renderWorkoutDays();
@@ -4265,6 +4267,7 @@ function renderWorkoutPlanner() {
     renderWorkoutAchievements();
     addCategoryFilterButtons();
     renderWorkoutExerciseList();
+    if (typeof renderExerciseCoverage === 'function') renderExerciseCoverage();
     saveWorkoutData();
     if (currentScreen === 'workoutNow') refreshWorkoutNowControls();
 }
@@ -4380,7 +4383,7 @@ function initializeWorkoutProgram() {
     });
     document.getElementById('workout-weight-entry-form')?.addEventListener('submit', saveWorkoutWeightEntry);
     document.getElementById('workout-weight-date')?.addEventListener('change', event => {
-        const selectedDate = event.target.value;
+        const selectedDate = validateDisplayDate(event.target);
         const existingEntry = getBodyWeightEntries().find(entry => entry.date === selectedDate);
         document.getElementById('workout-weight-input').value = existingEntry ? String(existingEntry.weight) : '';
     });

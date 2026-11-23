@@ -469,7 +469,7 @@ function recordSudokuLeaderboardEntry() {
         difficulty: sudokuState.difficulty,
         clues: sudokuState.clueCount,
         time: sudokuState.time,
-        date: new Date().toLocaleString()
+        date: new Date().toISOString()
     };
     entries.push(entry);
     entries.sort((a, b) => a.time - b.time);
@@ -526,7 +526,7 @@ function renderSudokuLeaderboard() {
             <div>#${index + 1}</div>
             <div>${entry.difficulty === 'custom' ? `Custom (${entry.clues || '?'} clues)` : entry.difficulty}</div>
             <div>${formatLeaderboardTime(entry.time)}</div>
-            <div>${entry.date}</div>
+            <div>${formatLeaderboardDate(entry.date)}</div>
         </div>
     `).join('');
 }
